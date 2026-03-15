@@ -2,66 +2,144 @@
 
 Add a new feature to the existing Mazmatics Stats Playground: an interactive exploration of New Zealand secondary school mathematics achievement data sourced from NZQA.
 
-Read the CLAUDE.md and .claude/SUMMARY.md first. Read the relevant .claude/skills/ SKILL.md files (d3-visualization, threejs-viz, nextjs-ssr, frontend-design, ui-ux-pro-max) before writing any code.
+Read the CLAUDE.md and .claude/SUMMARY.md first. Read the relevant .claude/skills/ SKILL.md files (d3-visualization, threejs-viz, nextjs-ssr, frontend-design, ui-ux-pro-max, nzqa-data-research) before writing any code.
 
-### Phase 1: Data Acquisition & Storage
+---
 
-**Download CSVs from NZQA** (https://www2.nzqa.govt.nz). Store raw files in `src/data/raw/nzqa/`. Base URL for all files: `https://www2.nzqa.govt.nz/assets/Qualifications-standards/Secondary-school-statistics/`
+## STATUS (as of 2026-03-16)
 
-For the **2024** dataset, download these (each has National, Gender, Ethnicity, School-Equity-Index-Group, and Region variants):
-- `2024/Subject/Subject-Attainment-Statistics-National-{variant}-2024-20250302.csv`
-- `2024/Participation/Participation-Qualification-Attainment-Statistics-National-{variant}-2024-20250302.csv`
-- `2024/Enrolment/Enrolment-Qualification-Attainment-Statistics-National-{variant}-2024-20250302.csv`
-- `2024/LitNum/Level-1-Literacy-and-Numeracy-Attainment-Statistics-National-{variant}-2024-20250302.csv`
-- `2024/Scholarship/Scholarship-Attainment-Statistics-National-{variant}-2024-20250302.csv`
-- `2024/Qualification-endorsement/Qualification-Endorsement-Attainment-Statistics-National-{variant}-2024-20250302.csv`
+**Phase 1 (Data Pipeline): ✅ COMPLETE**
+**Phase 2 (Visualisations): ✅ COMPLETE — all 5 charts rendering with data**
+**Phase 3 (Narrative & Polish): ✅ COMPLETE**
+**Phase 4 (Bug Fixes & Browser Testing): ✅ COMPLETE**
 
-Also download the equivalent files for **2023, 2022, 2021, 2020, 2019, 2018** year folders to extend coverage back to ~2009. Each file contains ~10 years of data — deduplicate overlapping years.
+**Phase 5 (Testing): 🔄 IN PROGRESS — next priority**
 
-**Install `better-sqlite3`** and `@types/better-sqlite3`. Create a SQLite database at `src/data/nzqa.db`. Design normalised tables:
-- `subject_attainment` — filter for Mathematics & Statistics subjects
-- `qualification_attainment` — NCEA L1/L2/L3, UE pass rates
-- `literacy_numeracy` — L1 literacy and numeracy attainment
-- `scholarship` — scholarship results
-- `qualification_endorsement` — merit/excellence endorsements
+---
 
-All tables should support columns for: year, level, metric, value, count, total, gender, ethnicity, equity_index_group (was "decile_band" pre-2023), region. Handle the 2023 transition from decile bands to equity index groups gracefully.
+## Phase 5: Testing (Next Priority)
 
-Write a seed script at `src/scripts/seed-nzqa.ts` that parses all downloaded CSVs and populates the DB. Create Next.js Route Handlers under `src/app/api/nzqa/` to query data with filter params (year range, level, ethnicity, equity group, region, gender).
+### 5a. Visual Verification
+Run `npx playwright test e2e/diagnostic2.spec.ts --project=chromium --reporter=list` and check screenshots in `e2e/screenshots/` for:
+- [ ] ComparisonDashboard heatmap shows data (year × group cells are coloured)
+- [ ] RegionalMap choropleth shows varying colours across NZ regions
+- [ ] EquityGapVisualizer shows all 5 ethnicity lines including Māori
+- [ ] AchievementLandscape 3D bars are correct height and coloured by group
+- [ ] TimelineExplorer shows 3 level lines clearly
 
-### Phase 2: Visualizations
+### 5b. Unit Tests
+Add to `src/__tests__/`:
+- `lib/palette.test.ts` — `choroplethColour()`, `fmtRate()`, `fmtCount()`
+- `lib/audio.test.ts` — mock AudioContext, test that functions don't throw
+- `api/subjects.test.ts` — test query building with null/non-null params
+- `api/timeline.test.ts` — test groupBy modes, metric validation
 
-Create a feature route at `src/app/nzqa-maths/page.tsx` (Server Component) that fetches data and passes to client visualization components. Follow the project's dynamic import pattern with `ssr: false` for all chart components.
+### 5c. Visual Regression Tests
+Add to `e2e/visual/`:
+- `nzqa-maths.visual.spec.ts` — snapshot each chart section
+- Update snapshots: `npx playwright test --config=playwright.visual.config.ts --update-snapshots`
 
+### 5d. E2E Interaction Tests
+Add to `e2e/`:
+- `nzqa-maths.spec.ts`:
+  - Level toggle changes chart (Timeline, EquityGap)
+  - Region click shows drilldown panel (RegionalMap)
+  - GroupBy dropdown changes heatmap rows (ComparisonDashboard)
+  - 3D landscape level buttons switch data
+
+---
+
+## Phase 1: Data Acquisition & Storage (COMPLETE)
+
+### What Was Built
+- `src/data/raw/nzqa/` — 38 CSV files (30 × 2024 + 8 × 2018)
+- `src/data/nzqa.db` — SQLite database, seeded with 18,532 rows total
+- `src/scripts/seed-nzqa.ts` — CSV parser, run: `npx tsx src/scripts/seed-nzqa.ts`
+- `src/lib/db/index.ts` — `getDb()` singleton, TypeScript row types
+- `next.config.ts` — `serverExternalPackages: ["better-sqlite3"]`
+
+### API Routes
+- `GET /api/nzqa/subjects` — filter by year, level, ethnicity, gender, equityGroup, region; `?param=null` = IS NULL
+- `GET /api/nzqa/timeline` — groupBy national/ethnicity/equity_index_group/region/gender, returns time series
+
+### CRITICAL: Data Structure
+NZQA CSVs are NOT cross-tabulated. Each breakdown is a separate file with only ONE non-null dimension per row:
+- National rows: all dimension columns NULL
+- Ethnicity rows: only `ethnicity` non-null
+- Gender rows: only `gender` non-null
+- Region rows: only `region` non-null
+- Equity rows: only `equity_index_group` non-null
+
+**No row has two non-null dimension columns.** Do not design visualisations requiring cross-tabulation.
+
+### Macron Fix Required After Re-seeding
+After any `npx tsx src/scripts/seed-nzqa.ts` run, the CSV source files have `M?ori` (macron lost during download). Run this fix:
+```js
+const db = new Database('src/data/nzqa.db');
+db.prepare("UPDATE subject_attainment SET ethnicity = REPLACE(ethnicity, 'M?ori', 'Māori') WHERE ethnicity LIKE '%M?ori%'").run();
+db.close();
+```
+
+---
+
+## Phase 2: Visualisations (COMPLETE)
+
+### Components
+1. `src/components/charts/TimelineExplorer.tsx` — D3 animated line/area, NCEA level toggle (null=all, 1, 2, 3)
+2. `src/components/charts/EquityGapVisualizer.tsx` — D3 multi-line by ethnicity/equity, highlight on click, label collision avoidance
+3. `src/components/charts/RegionalMap.tsx` — D3 choropleth TopoJSON, clickable regions show L1/L2/L3 drilldown
+4. `src/components/three/AchievementLandscape.tsx` — R3F 3D bars (geometry height=1, scale.y=achievement*5)
+5. `src/components/charts/ComparisonDashboard.tsx` — D3 heatmap, year × group from timeline API
+
+### Dynamic Import Wrapper
+`src/app/nzqa-maths/NzqaMathsClient.tsx` — `'use client'` wrapper with `ssr: false` for all 5 components (required because Next.js 15 forbids `ssr: false` in Server Components)
+
+### Page
+`src/app/nzqa-maths/page.tsx` — Server Component, imports from NzqaMathsClient, graph-paper background, gradient headings, stat cards
+
+---
+
+## Phase 3: Narrative & Polish (COMPLETE)
+
+All narrative sections present in `page.tsx` with:
+- 5 sections with `GradientHeading` components
+- Contextual narrative text between each chart
+- `SectionDivider` between sections
+- `StatCard` row in hero (10 yrs, 16 regions, 5 ethnic groups, 3 NCEA levels)
+- Sticky nav with back-to-home link
+
+---
+
+## Phase 4: Bug Fixes (COMPLETE — 2026-03-16)
+
+See `.claude/SUMMARY.md` Session 3 for full details. Key fixes:
+- Upgraded `@react-three/fiber` 8.x → 9.5.0 and `@react-three/drei` 9.x → 10.7.7 (React 19 compat)
+- Upgraded `@playwright/test` 1.40.1 → 1.58.2 (macOS Sequoia compatibility)
+- Fixed Māori macron in DB
+- Fixed AchievementLandscape bar geometry (was quadratically tall)
+- Fixed EquityGapVisualizer label overlap (collision avoidance)
+- Fixed RegionalMap drilldown (changed from empty ethnicity breakdown to L1/L2/L3 breakdown)
+- Redesigned ComparisonDashboard (year × group from timeline API instead of broken cross-tabulation)
+
+---
+
+## Original Phase 1–3 Spec (for reference)
+
+### Phase 1: Data Acquisition & Storage (original spec)
+[See original plan for CSV download URLs and DB schema]
+
+### Phase 2: Visualization Specs
 Build these visualizations in `src/components/charts/` and `src/components/three/`:
 
-1. **TimelineExplorer** (D3) — Animated line/area chart of maths achievement rates ~2009–2024. Toggle NCEA levels. Smooth `.join()` transitions. Hover tooltips with detail. Use `viewBox` for responsiveness.
+1. **TimelineExplorer** (D3) — Animated line/area chart of maths achievement rates ~2009–2024. Toggle NCEA levels. Smooth `.join()` transitions. Hover tooltips. Use `viewBox` for responsiveness.
 
-2. **EquityGapVisualizer** (D3) — Overlaid or small-multiples charts comparing achievement by ethnicity and equity index group. Show Māori, Pacific, Asian, European, MELAA. Make disparities visually clear through colour and scale choices.
+2. **EquityGapVisualizer** (D3) — Overlaid charts comparing achievement by ethnicity and equity index group. Show Māori, Pacific, Asian, European, MELAA. Make disparities visually clear.
 
-3. **RegionalMap** (D3 + TopoJSON) — NZ map coloured by regional maths achievement. Source a NZ regional boundaries TopoJSON. Clickable regions for drill-down. Store TopoJSON in `public/geo/`.
+3. **RegionalMap** (D3 + TopoJSON) — NZ map coloured by regional maths achievement. Clickable regions for drill-down.
 
-4. **AchievementLandscape** (Three.js/R3F) — 3D terrain: height = achievement rate, x-axis = time, z-axis = equity group or ethnicity. OrbitControls for exploration. Use instanced meshes if >1000 data points. Dynamic import with `ssr: false`.
+4. **AchievementLandscape** (Three.js/R3F) — 3D terrain: height = achievement rate, x-axis = time, z-axis = ethnicity. OrbitControls.
 
-5. **ComparisonDashboard** (D3) — Interactive heatmap or bubble chart. User picks two dimensions (ethnicity × region, equity group × gender, etc.) to cross-tabulate results.
+5. **ComparisonDashboard** (D3) — Heatmap: year × group dimension cross-tabulation.
 
 ### Phase 3: Narrative & Polish
-
-Add guided narrative sections between visualizations — short contextual text explaining what the data reveals about equity in NZ maths education. This should feel like a data journalism piece, not just a chart dashboard.
-
-### Design Requirements
-- Dark mode default, consistent with existing app (`bg-black text-white`, Geist fonts)
-- Tailwind CSS v4 utility classes only
-- Responsive mobile-first (sm → md → lg → xl → 2xl)
-- Animated transitions between views
-- Error boundaries for each visualization route
-- Loading skeletons matching existing pattern: `<div className="animate-pulse bg-slate-800 rounded-lg h-64" />`
-
-### Conventions (from CLAUDE.md)
-- Server Components by default, `'use client'` only where needed
-- `interface` for props, `type` for unions
-- Path alias `@/` for imports
-- PascalCase components, camelCase utils
-- No default exports except pages/layouts
-- D3: `.join()` pattern, cleanup in useEffect return, `viewBox` not fixed dimensions
-- Three.js: `useFrame` not `requestAnimationFrame`, dispose geometries in cleanup
+Guided narrative sections between visualizations. Dark mode, responsive, animated, error boundaries, loading skeletons.

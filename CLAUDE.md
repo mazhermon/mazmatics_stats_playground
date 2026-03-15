@@ -4,7 +4,7 @@
 An interactive data visualization web application for exploring mathematics and statistics concepts. Built with Next.js 15 (App Router, SSR), React 19, TypeScript, D3.js, and Three.js/React Three Fiber.
 
 **Owner:** Maz
-**Stack:** Next.js 15 | React 19 | TypeScript | Tailwind CSS v4 | D3.js v7 | Three.js | React Three Fiber | Drei
+**Stack:** Next.js 15 | React 19 | TypeScript | Tailwind CSS v4 | D3.js v7 | Three.js | React Three Fiber v9 | Drei v10 | better-sqlite3 | Playwright 1.58+
 
 ## Architecture
 
@@ -95,10 +95,18 @@ npm run test:watch    # Watch mode
 ```bash
 npm run test:e2e      # Run e2e tests (chromium + firefox + webkit)
 npm run test:visual   # Run visual regression tests (chromium only)
+npx playwright test e2e/diagnostic.spec.ts --project=chromium --reporter=list  # diagnostic run
 ```
 - E2E tests in `e2e/` directory
 - Visual regression snapshots in `e2e/visual/snapshots/`
 - Update visual snapshots: `npx playwright test --config=playwright.visual.config.ts --update-snapshots`
+- Screenshots from diagnostic tests saved to `e2e/screenshots/`
+
+### CRITICAL: Playwright macOS Sequoia Compatibility
+- Playwright 1.40.x bundled Chromium crashes with SIGSEGV on macOS 15 (Sequoia / Darwin 25.x)
+- Always use `@playwright/test` **1.58.0+**
+- After upgrading, run `npx playwright install chromium` to download compatible browser
+- Verify with: `npx playwright test e2e/diagnostic.spec.ts --project=chromium`
 
 ## D3.js Patterns
 
@@ -129,6 +137,23 @@ export function Chart({ data }: { data: DataPoint[] }) {
 
 ## Three.js / React Three Fiber Patterns
 
+### CRITICAL: R3F Version Requirements
+- **Use `@react-three/fiber` v9+ and `@react-three/drei` v10+** for React 19 compatibility
+- R3F v8.x peer-requires `react >=18 <19` — it will crash on React 19 with `Cannot read properties of undefined (reading 'ReactCurrentOwner')`
+- R3F v9+ requires `react ^19.0.0` and `three >=0.156`
+- Drei v10+ requires `@react-three/fiber ^9.0.0` and `react ^19`
+
+### JSX Types (React 19 + R3F v9)
+The `src/types/r3f.d.ts` file is REQUIRED to make Three.js JSX elements work with React 19:
+```ts
+import type { ThreeElements } from '@react-three/fiber/dist/declarations/src/three-types';
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
+```
+
 ### Canvas Setup
 ```tsx
 'use client';
@@ -147,11 +172,34 @@ export function Scene({ data }: { data: DataPoint[] }) {
 }
 ```
 
+### Animated Bar Pattern (useFrame)
+```tsx
+// CORRECT: unit geometry height, scale.y animates 0 → value
+function Bar({ height }: { height: number }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const currentH = useRef(0);
+  useFrame((_, delta) => {
+    if (!meshRef.current) return;
+    currentH.current += (height - currentH.current) * Math.min(1, delta * 4);
+    meshRef.current.scale.y = currentH.current;
+    meshRef.current.position.y = currentH.current / 2; // centre of scaled unit box
+  });
+  return (
+    <mesh ref={meshRef} scale={[1, 0.001, 1]}>
+      <boxGeometry args={[0.7, 1, 0.7]} /> {/* unit height — scale.y IS the height */}
+      <meshStandardMaterial color="..." />
+    </mesh>
+  );
+}
+// WRONG: args={[0.7, height*5, 0.7]} and scale.y = height → bars are height² tall
+```
+
 ### Key Rules
 - Always wrap Canvas in a client component with dynamic import (ssr: false)
 - Use `useFrame` for animations, not `requestAnimationFrame`
 - Dispose of geometries and materials in cleanup
 - Use instanced meshes for large datasets (>1000 points)
+- Bar geometry height should be 1 (unit); control actual height via `scale.y`
 
 ## Getting Started
 
@@ -164,6 +212,30 @@ npm test              # Unit tests
 npm run test:e2e      # E2E tests (requires dev server or builds first)
 ```
 
+## Known Issues & Gotchas
+
+### ssr: false in Server Components
+Next.js 15 **forbids** calling `dynamic(..., { ssr: false })` in Server Components. All D3/Three.js dynamic imports must live in a `'use client'` wrapper file. See `src/app/nzqa-maths/NzqaMathsClient.tsx` for the pattern.
+
+### RegionalMap TopoJSON
+- File: `public/geo/nz-regions.topojson`
+- Object key: `regions`
+- Feature property: `REGC_name` — includes " Region" suffix (e.g. `"Auckland Region"`)
+- NZQA region names have NO suffix (e.g. `"Auckland"`)
+- Mapping handled by `NZQA_TO_TOPOJSON` dict in `RegionalMap.tsx`
+- Exception: `Manawatu-Whanganui` in DB (no macron), maps to `Manawatū-Whanganui Region` in TopoJSON
+
+### NZQA Data: No Cross-Tabulation
+Each NZQA CSV breakdown is single-dimensional. No row has two non-null dimension columns. Do NOT build visualisations that require ethnicity × region, ethnicity × equity, etc. — they will always return empty. Use `timeline` API (year × group) for multi-dimensional views.
+
+### Tailwind CSS v4
+- Requires `@tailwindcss/postcss` ≥ 4.2.1 (4.0.0 breaks with `negated` ScannerOptions error)
+- Current: `tailwindcss@latest @tailwindcss/postcss@latest`
+
+### better-sqlite3
+- Server-only package — must be in `serverExternalPackages` in `next.config.ts`
+- Database: `src/data/nzqa.db` (read-only in production, read-write only in seed script)
+
 ## Skills Available
 This project includes Claude Code skills in `.claude/skills/`:
 - **ui-ux-pro-max** — Design intelligence (palettes, fonts, patterns)
@@ -173,3 +245,4 @@ This project includes Claude Code skills in `.claude/skills/`:
 - **d3-visualization** — D3.js v7 best practices for React
 - **threejs-viz** — Three.js / React Three Fiber patterns
 - **nextjs-ssr** — Next.js App Router and SSR strategies
+- **nzqa-data-research** — NZQA data sources, DB schema, API design, data structure facts

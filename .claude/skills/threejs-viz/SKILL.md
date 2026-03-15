@@ -1,25 +1,50 @@
 ---
 name: threejs-viz
 description: Three.js and React Three Fiber best practices for 3D data visualization. Covers scene setup, performance optimization, interactions, and Next.js SSR considerations.
-version: 1.0.0
+version: 2.0.0
 stacks:
   - Three.js
-  - React Three Fiber
-  - Drei
+  - React Three Fiber v9
+  - Drei v10
   - Next.js
+  - React 19
 ---
 
 # Three.js & React Three Fiber for 3D Visualization
 
+## ⚠️ React 19 + R3F Version Requirements
+
+**R3F v8.x is NOT compatible with React 19.** It crashes at runtime with:
+```
+Cannot read properties of undefined (reading 'ReactCurrentOwner')
+```
+
+| React version | R3F version | Drei version |
+|---------------|-------------|--------------|
+| React 18      | @react-three/fiber ^8 | @react-three/drei ^9 |
+| React 19      | @react-three/fiber ^9 | @react-three/drei ^10 |
+
+### Correct Setup for React 19
+```bash
+npm install three @react-three/fiber@^9 @react-three/drei@^10
+npm install -D @types/three
+```
+
+### JSX Types (Required for React 19)
+Create `src/types/r3f.d.ts`:
+```ts
+import type { ThreeElements } from '@react-three/fiber/dist/declarations/src/three-types';
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements extends ThreeElements {}
+  }
+}
+```
+Without this, `<mesh>`, `<boxGeometry>`, `<ambientLight>` etc. will have TypeScript errors.
+
 ## React Three Fiber Fundamentals
 
 React Three Fiber (R3F) brings Three.js into React with declarative syntax. Drei provides reusable helper components.
-
-### Setup
-```bash
-npm install three @react-three/fiber @react-three/drei
-npm install -D @types/three
-```
 
 ### Basic Scene Structure
 ```tsx

@@ -137,6 +137,67 @@ https://www2.nzqa.govt.nz/assets/NCEA/Secondary-school-and-NCEA/Annual-Reports-N
 ```
 These contain additional narrative context and tables not in the CSVs. Useful for pre-2014 data points and for understanding policy changes.
 
+## ⚠️ CRITICAL: What Was Actually Built (Read Before Any Code)
+
+### The DB is seeded and live at `src/data/nzqa.db`
+- Run `node -e "const db = require('better-sqlite3')('src/data/nzqa.db',{readonly:true}); console.log(db.prepare('SELECT COUNT(*) as n FROM subject_attainment').get());"` to verify
+- subject_attainment: 834 rows (Mathematics - Statistics, 2015–2024)
+
+### Macron Encoding Warning
+The source CSV files have `M?ori` (literal question mark, not ā). After any re-seed, run:
+```js
+const db = new Database('src/data/nzqa.db');
+db.prepare("UPDATE subject_attainment SET ethnicity = REPLACE(ethnicity, 'M?ori', 'Māori') WHERE ethnicity LIKE '%M?ori%'").run();
+```
+
+### Actual Ethnicity Labels in DB (post-fix)
+- `Asian`
+- `European`
+- `Māori` (with macron — must fix after re-seed)
+- `Middle Eastern/Latin American/African` (long form, NOT "MELAA")
+- `Pacific Peoples`
+
+### Actual Equity Group Labels in DB
+- `Fewer` (not "Low" or "Bottom")
+- `Moderate`
+- `More` (not "High" or "Top")
+- Pre-2023 decile bands: `Decile 1-3`, `Decile 4-7`, `Decile 8-10`
+
+### CRITICAL: No Cross-Tabulation in Data
+Each CSV is a single-dimension breakdown. In `subject_attainment`:
+- National row: all of `ethnicity`, `gender`, `equity_index_group`, `region` are NULL
+- Ethnicity row: only `ethnicity` is non-null, all others NULL
+- Gender row: only `gender` is non-null, all others NULL
+- Region row: only `region` is non-null, all others NULL
+- Equity row: only `equity_index_group` is non-null, all others NULL
+
+**NO row has two non-null dimension columns.** Visualisations must not require cross-tabulation.
+
+### What `achieved_rate` Actually Means
+`achieved_rate` = proportion of students who received the "Achieved" NCEA grade band ONLY.
+It does NOT include Merit or Excellence. Total pass rate = `achieved_rate + merit_rate + excellence_rate`.
+The "Achieved" band alone can be higher for some groups even if their overall pass rate is lower (if fewer get Merit/Excellence). Do not interpret `achieved_rate` as the overall pass rate.
+
+### Available API Endpoints
+```
+GET /api/nzqa/subjects?level=1&year=2024&region=null&ethnicity=null&gender=null&equityGroup=null
+  → Passing ?param=null means IS NULL (only national rows)
+  → Omitting a param means no filter on that column (returns all variants)
+
+GET /api/nzqa/timeline?metric=achieved_rate&groupBy=ethnicity&level=1
+  → groupBy: national | ethnicity | equity_index_group | region | gender
+  → Returns: { data: [{ year, level, group_label, value, assessed_count }] }
+  → This is the correct endpoint for year × group visualisations
+```
+
+### RegionalMap Drilldown
+Clicking a region shows NCEA Level 1/2/3 breakdown for that region (not ethnicity — no cross-tab data).
+URL: `/api/nzqa/subjects?year=2024&region=Auckland&ethnicity=null&gender=null&equityGroup=null`
+
+### ComparisonDashboard Heatmap
+Uses `/api/nzqa/timeline` — X axis = year (2015–2024), Y axis = group labels from selected groupBy.
+Do NOT use the subjects API for cross-tabulation (no data exists).
+
 ## Important Data Notes
 
 ### NCEA Context
