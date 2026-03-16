@@ -205,6 +205,51 @@ David McCandless / IiB philosophy:
 
 ---
 
+## 7. Implementation Notes (Creative Pages, March 2026)
+
+### Pages Built
+
+| Page | Route | Charts |
+|---|---|---|
+| Creative Views | `/nzqa-creative` | Bump Chart, Slope Chart, Stream Graph |
+| Data Stories | `/nzqa-stories` | Waffle Grid, Beeswarm Chart, Small Multiples |
+| Patterns & Trends | `/nzqa-patterns` | Ridgeline Plot, Horizon Chart, Bubble Comparison |
+
+All charts use `useNzqaData` hook + `useEffect + useRef<SVGSVGElement>` pattern.
+All pages linked from home page via nav card grid.
+Visual regression snapshots created: `e2e/visual/snapshots/creative-pages.visual.spec.ts-snapshots/`.
+
+### Gotchas Discovered
+
+**Bump Chart:** `d3.selectAll(null)` is not valid TypeScript in D3 v7. Use an append loop instead of `selectAll(null).data().join()` for per-line dots.
+
+**Stream Graph:** `stackOffsetWiggle` requires a complete matrix (all groups × all years). Fill missing values with `0`. The y-axis values are meaningless with wiggle offset — label it as "wiggle offset for visual clarity."
+
+**Beeswarm:** D3 force simulation must be run synchronously (`.stop()` + `for loop simulation.tick()`). Do NOT use async tick for SVG output — it will render before physics settle.
+
+**Bubble Comparison:** Using `d3.pack()` on a hierarchy node requires complex TypeScript generics. Replaced with force simulation (forceCenter + forceCollide) which gives equivalent bubble packing with cleaner types.
+
+**Ridgeline KDE:** With ~10 data points per group, use bandwidth ~0.07 (Epanechnikov). Too narrow (< 0.04) → spiky; too wide (> 0.15) → loses all detail.
+
+**Horizon Chart:** The "fold" technique uses a baseline at `ROW_H` and draws positive deviations above, negative below (folded up into the same row). Clip path per row is required to prevent overflow into adjacent rows.
+
+**d3.scaleSqrt vs d3.scaleLinear for bubble radii:** Must use `scaleSqrt` (area-proportional) NOT `scaleLinear` (radius-proportional). Using `scaleLinear` for radius makes large regions appear quadratically larger than they should.
+
+### What Worked Well
+
+- **Waffle Grid** — Most immediately impactful. "68 in 100" is far more visceral than "68%". Users understand it instantly without axis labels.
+- **Bump Chart** — Regional rank lines crossing are dramatically visible. COVID dip visible as simultaneous rank reshuffling.
+- **Slope Chart** — Direction arrows (▲/▼) with colour make the 2015→2024 story scannable in seconds.
+- **Small Multiples** — Shared y-axis enforces honest comparison; dashline national average is an effective reference.
+
+### What Was Challenging
+
+- **Stream Graph** — wiggle offset makes the shape pleasing but the absolute values unclear. Should add a note explaining the y-axis.
+- **Horizon Chart** — Interpreting above/below requires a legend. Added colour key below the chart.
+- **Ridgeline with sparse data** — 10 data points per group is sparse for KDE; curves are smooth but may overfit the small sample.
+
+---
+
 ## 6. Sources & References
 
 - [Information is Beautiful — Visualizations](https://informationisbeautiful.net/visualizations/)

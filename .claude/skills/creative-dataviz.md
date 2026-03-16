@@ -382,3 +382,75 @@ const ethnicityColours = {
 | Scrollytelling | Guided data narrative with scroll-triggered reveals |
 | Bubble Map | Regions as circles on NZ map: area=students, colour=achievement |
 | Cartogram | NZ map distorted by student population, not geography |
+
+---
+
+## Implementation Patterns (Validated March 2026)
+
+### Beeswarm — Force Simulation (Synchronous)
+```tsx
+// CORRECT: run simulation synchronously before SVG render
+const simulation = d3.forceSimulation<Node>(nodes)
+  .force('x', d3.forceX<Node>(d => xScale(d.value)).strength(1))
+  .force('y', d3.forceY<Node>(height / 2).strength(0.05))
+  .force('collide', d3.forceCollide<Node>(d => d.r + 2))
+  .stop(); // <-- stop immediately, don't animate
+for (let i = 0; i < 200; i++) simulation.tick(); // run physics to completion
+// WRONG: letting simulation run asynchronously (render fires before physics settles)
+```
+
+### Bubble Comparison — Force Layout (NOT d3.pack)
+```tsx
+// Prefer force simulation over d3.pack for bubble sizing — simpler TypeScript types
+const nodes = data.map(d => ({ ...d, r: rScale(d.count), x: W/2, y: H/2 }));
+d3.forceSimulation(nodes)
+  .force('center', d3.forceCenter(W/2, H/2).strength(0.05))
+  .force('collide', d3.forceCollide(d => d.r + 3).strength(0.8))
+  .stop();
+for (let i = 0; i < 300; i++) simulation.tick();
+// d3.pack() requires complex HierarchyCircularNode generics — hard to type correctly
+```
+
+### Dots in Loop (NOT selectAll(null))
+```tsx
+// CORRECT: append dots in a for loop (avoids TypeScript error with selectAll(null))
+for (const [x, y] of lineData) {
+  g.append('circle').attr('cx', x).attr('cy', y).attr('r', 4).attr('fill', color);
+}
+// WRONG: g.selectAll(null).data(pts).join('circle') — TypeScript rejects null selector
+```
+
+### Horizon Chart — Clip-path per Row
+```tsx
+// Each row MUST have its own clip-path to prevent overflow into adjacent rows
+defs.append('clipPath').attr('id', `horizon-clip-${i}`)
+  .append('rect').attr('width', innerW).attr('height', ROW_H);
+rowGroup.attr('clip-path', `url(#horizon-clip-${i})`);
+// Positive deviation: area drawn from ROW_H upward
+// Negative deviation: area drawn from ROW_H downward (folds into same space via clip)
+```
+
+### Ridgeline KDE — Recommended Settings
+```tsx
+// For ~10 data points per group (annual NZQA data):
+const bandwidth = 0.07;  // too low (<0.04) = spiky; too high (>0.15) = all detail lost
+const thresholds = d3.range(0, 1.01, 0.01); // 101 points across [0, 1]
+// Use Epanechnikov kernel (compact support, efficient)
+function epanechnikovKernel(bw) {
+  return v => { const u = v/bw; return Math.abs(u) <= 1 ? 0.75*(1-u*u)/bw : 0; };
+}
+```
+
+### Stream Graph — Wiggle Offset
+```tsx
+// stackOffsetWiggle requires COMPLETE matrix (no missing years for any group)
+const matrix = years.map(yr => {
+  const row = { year: yr };
+  for (const g of groups) {
+    const pt = data.find(d => d.year === yr && d.group === g);
+    row[g] = pt?.value ?? 0; // fill missing with 0 — critical!
+  }
+  return row;
+});
+// y-axis values are meaningless — always note this for users
+```
