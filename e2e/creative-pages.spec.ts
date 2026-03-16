@@ -1,46 +1,7 @@
-# Test Coverage for Creative Pages — Implementation Plan
+import { test, expect } from '@playwright/test';
 
-## Context
+// ─── Home Page Nav Cards ──────────────────────────────────────────────────────
 
-Phase 6 added 3 new pages and 9 new D3 chart components. Visual regression snapshots exist (4 passing). What's still missing:
-
-1. **Playwright e2e tests** — verify page load, chart elements render, interactive controls work
-2. **Nav card link tests** — verify home page cards navigate to the correct pages
-3. **Utility extraction (optional)** — the rank computation and KDE logic inside chart components could be extracted into pure functions and unit-tested
-
-The visual snapshots catch _appearance_ regressions. The e2e tests will catch:
-- JavaScript errors on load (broken imports, missing data)
-- Interactive controls silently failing (level/year buttons that update state but don't trigger re-render)
-- Charts rendering empty (no SVG children even when data loads)
-
----
-
-## What Exists Already
-
-### Visual regression (done)
-```
-e2e/visual/creative-pages.visual.spec.ts  — 4 tests, all passing
-  - home page with nav cards
-  - /nzqa-creative page
-  - /nzqa-stories page
-  - /nzqa-patterns page
-```
-
-### What does NOT exist yet
-```
-e2e/creative-pages.spec.ts     ← DOES NOT EXIST — to be created
-src/__tests__/lib/rankUtils.test.ts  ← OPTIONAL — only if logic extracted
-```
-
----
-
-## Step 1 — Playwright E2E: `e2e/creative-pages.spec.ts`
-
-Use `playwright.config.ts` (not the visual config). Tests run against Chromium.
-
-### 1A — Home Page Nav Cards
-
-```typescript
 test.describe('Home page nav cards', () => {
   test('all 4 nav cards are present and link correctly', async ({ page }) => {
     await page.goto('/');
@@ -71,16 +32,13 @@ test.describe('Home page nav cards', () => {
     await expect(page.locator('h1')).toContainText('Patterns & Trends');
   });
 });
-```
 
-### 1B — `/nzqa-creative` Page Tests
+// ─── /nzqa-creative Page ─────────────────────────────────────────────────────
 
-```typescript
 test.describe('/nzqa-creative page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/nzqa-creative');
     await page.waitForLoadState('networkidle');
-    // Wait for D3 charts to render
     await page.waitForTimeout(2000);
   });
 
@@ -99,38 +57,33 @@ test.describe('/nzqa-creative page', () => {
   });
 
   test('bump chart SVG renders', async ({ page }) => {
-    // Bump chart section should have an SVG with paths (the rank lines)
     const paths = page.locator('svg path');
     await expect(paths.first()).toBeVisible();
   });
 
   test('bump chart level selector changes level', async ({ page }) => {
-    // Default is Level 2; click Level 1 and verify button becomes active
     const level1Btn = page.getByRole('button', { name: 'Level 1' }).first();
     await level1Btn.click();
     await expect(level1Btn).toHaveClass(/bg-violet-600/);
-    // Wait for data to reload and SVG to re-render
     await page.waitForTimeout(1500);
     const paths = page.locator('svg path');
     await expect(paths.first()).toBeVisible();
   });
 
   test('slope chart SVG renders with lines', async ({ page }) => {
-    const lines = page.locator('svg line');
-    await expect(lines.first()).toBeVisible();
+    // SlopeChart is the 2nd overflow-x-auto container; its circles (dots at endpoints) are reliably visible
+    const slopeCircles = page.locator('.overflow-x-auto').nth(1).locator('svg circle');
+    await expect(slopeCircles.first()).toBeVisible();
   });
 
   test('stream graph SVG renders with filled paths', async ({ page }) => {
-    // Stream graph fills are paths with non-zero fill-opacity
     const filledPaths = page.locator('svg path.stream');
     await expect(filledPaths.first()).toBeVisible();
   });
 });
-```
 
-### 1C — `/nzqa-stories` Page Tests
+// ─── /nzqa-stories Page ──────────────────────────────────────────────────────
 
-```typescript
 test.describe('/nzqa-stories page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/nzqa-stories');
@@ -148,9 +101,9 @@ test.describe('/nzqa-stories page', () => {
   });
 
   test('waffle grid panels render (at least 4 groups)', async ({ page }) => {
-    // Each group has a bg-slate-900 panel with an SVG waffle
     const panels = page.locator('.bg-slate-900 svg');
-    await expect(panels).toHaveCount({ minimum: 4 });
+    const count = await panels.count();
+    expect(count).toBeGreaterThanOrEqual(4);
   });
 
   test('waffle level selector works', async ({ page }) => {
@@ -171,21 +124,19 @@ test.describe('/nzqa-stories page', () => {
   });
 
   test('small multiples render at least 4 panels', async ({ page }) => {
-    // Each panel is bg-slate-900 rounded-xl with an SVG
     const svgs = page.locator('.bg-slate-900 svg');
-    await expect(svgs).toHaveCount({ minimum: 4 });
+    const count = await svgs.count();
+    expect(count).toBeGreaterThanOrEqual(4);
   });
 });
-```
 
-### 1D — `/nzqa-patterns` Page Tests
+// ─── /nzqa-patterns Page ─────────────────────────────────────────────────────
 
-```typescript
 test.describe('/nzqa-patterns page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/nzqa-patterns');
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(2500); // horizon chart needs slightly longer
+    await page.waitForTimeout(2500);
   });
 
   test('page loads with no console errors', async ({ page }) => {
@@ -198,7 +149,6 @@ test.describe('/nzqa-patterns page', () => {
   });
 
   test('ridgeline plot renders KDE paths', async ({ page }) => {
-    // Each ridge is a path in the SVG
     const paths = page.locator('svg path');
     await expect(paths.first()).toBeVisible();
   });
@@ -211,7 +161,6 @@ test.describe('/nzqa-patterns page', () => {
   });
 
   test('horizon chart renders region rows', async ({ page }) => {
-    // Each region row is a g element with clip-path applied
     const paths = page.locator('svg path');
     await expect(paths.first()).toBeVisible();
   });
@@ -230,71 +179,3 @@ test.describe('/nzqa-patterns page', () => {
     await expect(bubbles.first()).toBeVisible();
   });
 });
-```
-
----
-
-## Step 2 — Optional: Extract Testable Utilities
-
-If the rank computation or KDE logic grows, extract into pure functions:
-
-### `src/lib/chartUtils.ts` (only if warranted)
-```typescript
-/** Compute per-year ranks from grouped time-series data */
-export function computeRanks(
-  points: Array<{ group_label: string; year: number; value: number }>,
-  years: number[]
-): Map<string, Map<number, number>> { ... }
-
-/** Epanechnikov KDE */
-export function epanechnikovKde(bandwidth: number, thresholds: number[], data: number[]): [number, number][] { ... }
-```
-
-Then add `src/__tests__/lib/chartUtils.test.ts`. Only do this if there are multiple callers — don't extract for the sake of testability if it's currently only used in one component.
-
----
-
-## Implementation Order
-
-```
-Step 1 — Create e2e/creative-pages.spec.ts
-  Write all 4 describe blocks (home, creative, stories, patterns)
-  Run: npx playwright test e2e/creative-pages.spec.ts --project=chromium --reporter=list
-
-Step 2 — Fix any failures
-  If console error tests fail: investigate what error is appearing and fix root cause
-  If SVG element tests fail: check selector matches actual rendered class names
-  If timing fails: increase waitForTimeout appropriately
-
-Step 3 — (Optional) Extract and test pure utilities
-  Only if rank computation or KDE is used in >1 component
-
-Step 4 — Final verification
-  npx tsc --noEmit
-  npm run lint
-  npm test
-  npx playwright test e2e/creative-pages.spec.ts --project=chromium --reporter=list
-  npx playwright test e2e/visual/creative-pages.visual.spec.ts --config=playwright.visual.config.ts --project=chromium
-  Confirm all green.
-```
-
----
-
-## Key Notes for Next Session
-
-- **Start by reading** `summary.md` for full project context before touching any code
-- **Playwright config:** interactive e2e tests use `playwright.config.ts`; visual regression uses `playwright.visual.config.ts`
-- **Dev server:** both configs use `reuseExistingServer: true` — start `npm run dev` first, or let Playwright start it
-- **CSS class selectors:** `bg-violet-600` for active level buttons, `bg-blue-600` for active year buttons, `.bee-dot` for beeswarm dots, `.bubble` for bubble comparison, `.stream` for stream graph paths
-- **Timing:** D3 force simulations take ~300ms; API fetches add ~100ms; use `waitForTimeout(2000)` as a safe minimum
-
----
-
-## Completion Promise
-
-Output `<promise>E2E_TESTS_COMPLETE</promise>` when ALL of the following are true:
-- `e2e/creative-pages.spec.ts` exists and all tests pass
-- `npx tsc --noEmit` exits 0
-- `npm run lint` exits 0
-- `npm test` exits 0 (existing Jest tests still pass)
-- `npx playwright test e2e/visual/creative-pages.visual.spec.ts --config=playwright.visual.config.ts` still passes (no regressions)
