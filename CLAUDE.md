@@ -246,3 +246,4 @@ This project includes Claude Code skills in `.claude/skills/`:
 - **threejs-viz** — Three.js / React Three Fiber patterns
 - **nextjs-ssr** — Next.js App Router and SSR strategies
 - **nzqa-data-research** — NZQA data sources, DB schema, API design, data structure facts
+- **creative-dataviz** — Creative visualisation types beyond bar charts: beeswarm, ridgeline, waffle, alluvial, bump, slope, horizon, chord, stream, scrollytelling, cartogram — with D3 patterns and NZQA-specific use cases
