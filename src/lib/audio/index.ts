@@ -61,8 +61,9 @@ export function playHoverTone(value: number, volume = 0.08): void {
 
     osc.start(c.currentTime);
     osc.stop(c.currentTime + 0.35);
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
   } catch {
-    // AudioContext errors are non-fatal
+    // intentional: audio errors are non-fatal
   }
 }
 
@@ -94,9 +95,10 @@ export function playSelectChord(value: number): void {
 
       osc.start(c.currentTime + i * 0.05);
       osc.stop(c.currentTime + i * 0.05 + 0.65);
+      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     });
   } catch {
-    // AudioContext errors are non-fatal
+    // intentional: audio errors are non-fatal
   }
 }
 
@@ -126,7 +128,8 @@ export function playTransitionSweep(direction: 'up' | 'down' = 'up'): void {
 
     osc.start(c.currentTime);
     osc.stop(c.currentTime + 0.35);
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
   } catch {
-    // AudioContext errors are non-fatal
+    // intentional: audio errors are non-fatal
   }
 }

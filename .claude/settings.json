@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/mazhermon/Sites/mazmaticsClaudeProjects/mazmaticsStats_001/.claude/hooks/ralph-stop-hook.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -59,20 +59,20 @@ export const ACHIEVEMENT_DOMAIN = [0, 0.3, 0.5, 0.7, 0.85, 1.0];
 
 /** Get choropleth colour for an achievement rate [0,1] */
 export function choroplethColour(rate: number | null): string {
-  if (rate === null) return '#2a2a3a';
+  if (rate === null || isNaN(rate)) return '#2a2a3a';
   // Map [0,1] to one of 8 colours
   const idx = Math.min(7, Math.floor(rate * 8));
-  return CHOROPLETH_SEQUENTIAL[idx] ?? CHOROPLETH_SEQUENTIAL[7] ?? '#BA90FF';
+  return CHOROPLETH_SEQUENTIAL[idx]!;
 }
 
 /** Format a rate as a percentage string */
 export function fmtRate(rate: number | null): string {
-  if (rate === null) return '—';
+  if (rate === null || isNaN(rate)) return '—';
   return `${(rate * 100).toFixed(1)}%`;
 }
 
 /** Format a number with commas */
 export function fmtCount(count: number | null): string {
-  if (count === null) return '—';
+  if (count === null || isNaN(count)) return '—';
   return count.toLocaleString('en-NZ');
 }

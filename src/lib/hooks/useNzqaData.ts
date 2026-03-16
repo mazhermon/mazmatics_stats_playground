@@ -16,7 +16,10 @@ export function useNzqaData<T>(url: string | null): FetchState<T> {
   });
 
   useEffect(() => {
-    if (!url) return;
+    if (!url) {
+      setState({ data: null, loading: false, error: null });
+      return;
+    }
 
     let cancelled = false;
     setState({ data: null, loading: true, error: null });
@@ -29,8 +32,9 @@ export function useNzqaData<T>(url: string | null): FetchState<T> {
       .then((data) => {
         if (!cancelled) setState({ data, loading: false, error: null });
       })
-      .catch((err: Error) => {
-        if (!cancelled) setState({ data: null, loading: false, error: err.message });
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (!cancelled) setState({ data: null, loading: false, error: msg });
       });
 
     return () => { cancelled = true; };

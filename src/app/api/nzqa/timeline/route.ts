@@ -37,9 +37,21 @@ export function GET(request: NextRequest) {
   const conditions: string[] = ['subject LIKE \'%Mathematics%\''];
   const params: Record<string, number> = {};
 
-  if (level) { conditions.push('level = @level'); params.level = parseInt(level, 10); }
-  if (yearFrom) { conditions.push('year >= @yearFrom'); params.yearFrom = parseInt(yearFrom, 10); }
-  if (yearTo) { conditions.push('year <= @yearTo'); params.yearTo = parseInt(yearTo, 10); }
+  if (level) {
+    const lvl = parseInt(level, 10);
+    if (isNaN(lvl)) return NextResponse.json({ error: 'Invalid level' }, { status: 400 });
+    conditions.push('level = @level'); params.level = lvl;
+  }
+  if (yearFrom) {
+    const yf = parseInt(yearFrom, 10);
+    if (isNaN(yf)) return NextResponse.json({ error: 'Invalid yearFrom' }, { status: 400 });
+    conditions.push('year >= @yearFrom'); params.yearFrom = yf;
+  }
+  if (yearTo) {
+    const yt = parseInt(yearTo, 10);
+    if (isNaN(yt)) return NextResponse.json({ error: 'Invalid yearTo' }, { status: 400 });
+    conditions.push('year <= @yearTo'); params.yearTo = yt;
+  }
 
   const where = `WHERE ${conditions.join(' AND ')}`;
 
@@ -90,12 +102,14 @@ export function GET(request: NextRequest) {
         FROM subject_attainment
         ${dimWhere}
         ORDER BY year, level, ${groupBy}
+        /* groupBy is allowlist-validated above — safe to interpolate */
       `;
       rows = db.prepare(sql).all(params);
     }
 
     return NextResponse.json({ data: rows, metric, groupBy });
   } catch (error) {
+    console.error('[/api/nzqa/timeline]', error);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
 }

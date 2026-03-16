@@ -7,7 +7,6 @@ export function getDb(): Database.Database {
   if (!db) {
     const dbPath = path.join(process.cwd(), 'src/data/nzqa.db');
     db = new Database(dbPath, { readonly: true });
-    db.pragma('journal_mode = WAL');
   }
   return db;
 }

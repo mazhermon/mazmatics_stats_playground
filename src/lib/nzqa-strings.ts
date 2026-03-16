@@ -89,8 +89,8 @@ export const strings = {
     not_achieved_rate: 'Not achieved rate',
   },
   tooltips: {
-    achievementRate: (rate: number, year: number, group: string) =>
-      `${group} · ${year}: ${(rate * 100).toFixed(1)}% achieved`,
+    achievementRate: (rate: number | null, year: number, group: string) =>
+      `${group} · ${year}: ${rate != null ? (rate * 100).toFixed(1) + '%' : '—'} achieved`,
     noData: 'No data available for this group',
     clickForDetail: 'Click to explore this region',
   },
