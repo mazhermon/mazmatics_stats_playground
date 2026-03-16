@@ -1,145 +1,188 @@
-## Task: Build NZ Maths Achievement Data Explorer
+# Data Explorer Enhancement Plan
 
-Add a new feature to the existing Mazmatics Stats Playground: an interactive exploration of New Zealand secondary school mathematics achievement data sourced from NZQA.
+## Current State / What We Know
 
-Read the CLAUDE.md and .claude/SUMMARY.md first. Read the relevant .claude/skills/ SKILL.md files (d3-visualization, threejs-viz, nextjs-ssr, frontend-design, ui-ux-pro-max, nzqa-data-research) before writing any code.
+### What the data actually contains
 
----
+| Breakdown | Years | Groups |
+|---|---|---|
+| Ethnicity | 2015–2024 | Asian, European, Māori, Pacific Peoples, MELAA |
+| Equity group | 2019–2024 | Fewer / Moderate / More (resources) |
+| Region | All years | 16 NZ regions + Pacific Islands |
+| Gender | All years | Female / Male |
+| Overall (no breakdown) | All years | National aggregate |
 
-## STATUS (as of 2026-03-16)
+**No cross-tabulation** — every row has exactly ONE non-null breakdown column. You cannot filter by ethnicity AND equity simultaneously (the data doesn't exist).
 
-**Phase 1 (Data Pipeline): ✅ COMPLETE**
-**Phase 2 (Visualisations): ✅ COMPLETE — all 5 charts rendering with data**
-**Phase 3 (Narrative & Polish): ✅ COMPLETE**
-**Phase 4 (Bug Fixes & Browser Testing): ✅ COMPLETE**
+Note: "European" in the raw data = NZ European / Pākehā. MELAA = Middle Eastern / Latin American / African.
 
-**Phase 5 (Testing): 🔄 IN PROGRESS — next priority**
+### Critical metric misunderstanding (must fix first)
 
----
+`achieved_rate` ≠ "overall pass rate". It means students who got the **Achieved grade only** (the minimum pass band). Students who got Merit or Excellence are NOT counted in `achieved_rate`. This means:
 
-## Phase 5: Testing (Next Priority)
+- **Asian students appear to have the lowest achievement** in the current chart (35.8%) because they mostly get Merit/Excellence
+- **Māori/Pacific appear highest** (49–51%) because when they pass, they tend to pass at the Achieved grade
 
-### 5a. Visual Verification
-Run `npx playwright test e2e/diagnostic2.spec.ts --project=chromium --reporter=list` and check screenshots in `e2e/screenshots/` for:
-- [ ] ComparisonDashboard heatmap shows data (year × group cells are coloured)
-- [ ] RegionalMap choropleth shows varying colours across NZ regions
-- [ ] EquityGapVisualizer shows all 5 ethnicity lines including Māori
-- [ ] AchievementLandscape 3D bars are correct height and coloured by group
-- [ ] TimelineExplorer shows 3 level lines clearly
+The correct metrics to show the equity gap:
+- `not_achieved_rate` — fail rate (most direct)
+- `merit_rate + excellence_rate` — top-of-grade-distribution rate (most striking)
+- `1 - not_achieved_rate` — overall pass rate
 
-### 5b. Unit Tests
-Add to `src/__tests__/`:
-- `lib/palette.test.ts` — `choroplethColour()`, `fmtRate()`, `fmtCount()`
-- `lib/audio.test.ts` — mock AudioContext, test that functions don't throw
-- `api/subjects.test.ts` — test query building with null/non-null params
-- `api/timeline.test.ts` — test groupBy modes, metric validation
+Actual picture at NCEA Level 1 (10-year average):
+| Ethnicity | Fail rate | Overall pass | Merit+Excellence |
+|---|---|---|---|
+| Asian | 14% | **86%** | 51% |
+| European | 16% | **84%** | 42% |
+| MELAA | 19% | **81%** | 38% |
+| Māori | 24% | **76%** | 26% |
+| Pacific Peoples | 25% | **75%** | 24% |
 
-### 5c. Visual Regression Tests
-Add to `e2e/visual/`:
-- `nzqa-maths.visual.spec.ts` — snapshot each chart section
-- Update snapshots: `npx playwright test --config=playwright.visual.config.ts --update-snapshots`
+### Equity group data notes
 
-### 5d. E2E Interaction Tests
-Add to `e2e/`:
-- `nzqa-maths.spec.ts`:
-  - Level toggle changes chart (Timeline, EquityGap)
-  - Region click shows drilldown panel (RegionalMap)
-  - GroupBy dropdown changes heatmap rows (ComparisonDashboard)
-  - 3D landscape level buttons switch data
-
----
-
-## Phase 1: Data Acquisition & Storage (COMPLETE)
-
-### What Was Built
-- `src/data/raw/nzqa/` — 38 CSV files (30 × 2024 + 8 × 2018)
-- `src/data/nzqa.db` — SQLite database, seeded with 18,532 rows total
-- `src/scripts/seed-nzqa.ts` — CSV parser, run: `npx tsx src/scripts/seed-nzqa.ts`
-- `src/lib/db/index.ts` — `getDb()` singleton, TypeScript row types
-- `next.config.ts` — `serverExternalPackages: ["better-sqlite3"]`
-
-### API Routes
-- `GET /api/nzqa/subjects` — filter by year, level, ethnicity, gender, equityGroup, region; `?param=null` = IS NULL
-- `GET /api/nzqa/timeline` — groupBy national/ethnicity/equity_index_group/region/gender, returns time series
-
-### CRITICAL: Data Structure
-NZQA CSVs are NOT cross-tabulated. Each breakdown is a separate file with only ONE non-null dimension per row:
-- National rows: all dimension columns NULL
-- Ethnicity rows: only `ethnicity` non-null
-- Gender rows: only `gender` non-null
-- Region rows: only `region` non-null
-- Equity rows: only `equity_index_group` non-null
-
-**No row has two non-null dimension columns.** Do not design visualisations requiring cross-tabulation.
-
-### Macron Fix Required After Re-seeding
-After any `npx tsx src/scripts/seed-nzqa.ts` run, the CSV source files have `M?ori` (macron lost during download). Run this fix:
-```js
-const db = new Database('src/data/nzqa.db');
-db.prepare("UPDATE subject_attainment SET ethnicity = REPLACE(ethnicity, 'M?ori', 'Māori') WHERE ethnicity LIKE '%M?ori%'").run();
-db.close();
-```
+- Equity data starts 2019 only (6 years, not the full 10)
+- "Fewer resources" = schools serving lower socioeconomic communities (old low-decile equivalent)
+- "More resources" = schools serving wealthier communities (old high-decile equivalent)
+- Pattern: "Fewer resources" schools have the WORST outcomes — highest fail rate, lowest Merit+Excellence
+- 2024 spike: fail rates jumped 5–10pp across all equity groups — likely NCEA reform impact
+- Equity groups replaced decile bands in 2023; pre-2023 rows use mapped equivalents
 
 ---
 
-## Phase 2: Visualisations (COMPLETE)
+## Planned Changes
 
-### Components
-1. `src/components/charts/TimelineExplorer.tsx` — D3 animated line/area, NCEA level toggle (null=all, 1, 2, 3)
-2. `src/components/charts/EquityGapVisualizer.tsx` — D3 multi-line by ethnicity/equity, highlight on click, label collision avoidance
-3. `src/components/charts/RegionalMap.tsx` — D3 choropleth TopoJSON, clickable regions show L1/L2/L3 drilldown
-4. `src/components/three/AchievementLandscape.tsx` — R3F 3D bars (geometry height=1, scale.y=achievement*5)
-5. `src/components/charts/ComparisonDashboard.tsx` — D3 heatmap, year × group from timeline API
+### P0 — Fix the broken narrative (do first, small change)
 
-### Dynamic Import Wrapper
-`src/app/nzqa-maths/NzqaMathsClient.tsx` — `'use client'` wrapper with `ssr: false` for all 5 components (required because Next.js 15 forbids `ssr: false` in Server Components)
+**Problem:** The equity section text says "Māori/Pacific achieve at lower rates" but the chart shows `achieved_rate` (Achieved-grade-only), which makes Māori appear to OUTPERFORM Asian students. This is actively misleading.
 
-### Page
-`src/app/nzqa-maths/page.tsx` — Server Component, imports from NzqaMathsClient, graph-paper background, gradient headings, stat cards
+**Fix in `EquityGapVisualizer`:**
+- Change default metric to `not_achieved_rate` (fail rate)
+- Add computed metric options: "Pass rate", "Merit + Excellence rate"
+- Update metric labels in controls to be explicit: "Fail rate (Not Achieved)", "Merit + Excellence", "Overall pass rate"
+- Add a small explanatory note: "'Achieved only' = minimum pass grade. Does not include Merit or Excellence."
 
 ---
 
-## Phase 3: Narrative & Polish (COMPLETE)
+### P1 — Māori vs non-Māori grouping
 
-All narrative sections present in `page.tsx` with:
-- 5 sections with `GradientHeading` components
-- Contextual narrative text between each chart
-- `SectionDivider` between sections
-- `StatCard` row in hero (10 yrs, 16 regions, 5 ethnic groups, 3 NCEA levels)
-- Sticky nav with back-to-home link
+**Where:** Add a toggle to `TimelineExplorer` and `EquityGapVisualizer` alongside "By ethnicity"
 
----
+**How:** No new API endpoint needed. Client-side computation:
+- "Māori" = keep as-is from existing ethnicity data
+- "Non-Māori" = weighted average of all other ethnicities using `assessed_count` as weight
 
-## Phase 4: Bug Fixes (COMPLETE — 2026-03-16)
-
-See `.claude/SUMMARY.md` Session 3 for full details. Key fixes:
-- Upgraded `@react-three/fiber` 8.x → 9.5.0 and `@react-three/drei` 9.x → 10.7.7 (React 19 compat)
-- Upgraded `@playwright/test` 1.40.1 → 1.58.2 (macOS Sequoia compatibility)
-- Fixed Māori macron in DB
-- Fixed AchievementLandscape bar geometry (was quadratically tall)
-- Fixed EquityGapVisualizer label overlap (collision avoidance)
-- Fixed RegionalMap drilldown (changed from empty ethnicity breakdown to L1/L2/L3 breakdown)
-- Redesigned ComparisonDashboard (year × group from timeline API instead of broken cross-tabulation)
+This framing is standard in NZ education policy and makes the gap far clearer than 5 separate lines.
 
 ---
 
-## Original Phase 1–3 Spec (for reference)
+### P2 — School equity group charts (new section)
 
-### Phase 1: Data Acquisition & Storage (original spec)
-[See original plan for CSV download URLs and DB schema]
+Add a section "Achievement by school resources" to `/nzqa-maths`, below the existing equity section.
 
-### Phase 2: Visualization Specs
-Build these visualizations in `src/components/charts/` and `src/components/three/`:
+**Chart 2a: Equity Group Timeline** (line chart, matches existing style)
+- Lines: Fewer / Moderate / More resources over 2019–2024
+- Default metric: `not_achieved_rate`
+- Annotate 2024 spike
+- Note that equity data starts 2019
 
-1. **TimelineExplorer** (D3) — Animated line/area chart of maths achievement rates ~2009–2024. Toggle NCEA levels. Smooth `.join()` transitions. Hover tooltips. Use `viewBox` for responsiveness.
+**Chart 2b: Stacked Grade Distribution by Equity Group** (stacked bar)
+- For a selected year and level, show 4 stacked grade bands per equity group
+- Bands: Not Achieved / Achieved / Merit / Excellence
+- This is where the equity story is most visually striking — the Merit+Excellence stack shrinks dramatically from "Fewer" to "More" resources schools
 
-2. **EquityGapVisualizer** (D3) — Overlaid charts comparing achievement by ethnicity and equity index group. Show Māori, Pacific, Asian, European, MELAA. Make disparities visually clear.
+**API needed:** Extend `/api/nzqa/timeline` to support `metric=all` returning all 4 grade columns, or add `/api/nzqa/breakdown` endpoint.
 
-3. **RegionalMap** (D3 + TopoJSON) — NZ map coloured by regional maths achievement. Clickable regions for drill-down.
+---
 
-4. **AchievementLandscape** (Three.js/R3F) — 3D terrain: height = achievement rate, x-axis = time, z-axis = ethnicity. OrbitControls.
+### P3 — Fail rate / grade distribution chart (new, uses existing API)
 
-5. **ComparisonDashboard** (D3) — Heatmap: year × group dimension cross-tabulation.
+**Chart: "Where do students land?" — stacked area by year**
 
-### Phase 3: Narrative & Polish
-Guided narrative sections between visualizations. Dark mode, responsive, animated, error boundaries, loading skeletons.
+For a selected group, show the full grade distribution across time:
+- Stacked layers: Not Achieved → Achieved → Merit → Excellence
+- X axis: year
+- Makes all of the following visible at once:
+  - 2020 COVID effect (fail rates dropped, possible grade leniency)
+  - 2024 NCEA reform shock (fail rates spiked, Merit+Excellence compressed)
+  - Long-term trends per group
+
+**Implementation:** New `GradeStackChart` component. Uses D3 `stack()` with `stackOffsetNone`. Existing timeline API can be extended with `metric=all`.
+
+---
+
+### P4 — Year-on-year change (delta) chart
+
+Show the change in fail rate or pass rate vs the previous year, by group. A diverging bar chart (positive = improved, negative = regressed) per year.
+
+Surfaces:
+- Which groups benefited most from COVID leniency (2020–2021)
+- Which groups were hit hardest by 2024 reform
+- Whether the Māori/Pacific gap is narrowing or widening (spoiler: it is largely stable over 10 years)
+
+---
+
+### P5 — Untapped tables (new explorations)
+
+Three tables in the DB are completely unused:
+
+**Scholarship table** (`scholarship`)
+- Outstanding/Scholarship/No Award rates by ethnicity, equity, region, year
+- Shows the "top of the pipeline" — who gets NZ's highest academic award
+- The ethnicity gap here will be even more stark than NCEA achievement
+
+**Qualification Endorsement table** (`qualification_endorsement`)
+- Excellence/Merit endorsement of full NCEA qualifications (different from individual subject grades)
+- Shows who gets Merit/Excellence for their entire qualification — a higher bar
+
+**Literacy & Numeracy table** (`literacy_numeracy`)
+- Co-attainment of the literacy/numeracy co-requisite alongside maths
+- Do students strong in maths also meet the literacy co-req? Does this vary by group?
+
+Each of these could be a new page or a new section on `/nzqa-maths`.
+
+---
+
+### P6 — Correlation ideas
+
+All feasible with existing data (no cross-tab needed — each is a single-dimension analysis):
+
+1. **Gender gap by level** — Female vs Male achievement across L1/L2/L3. Does the gap widen or narrow at higher levels?
+2. **Level progression** — National pass rates at L1 vs L2 vs L3 over time. How much does the cohort thin at each level?
+3. **Regional variance** — Which regions have the widest spread between their best and worst year? Most volatile = most affected by 2024 reform?
+4. **Equity × level interaction** — Does the equity gap widen or narrow at L2/L3 vs L1?
+5. **Scholarship by ethnicity** — Comparing who sits vs who succeeds at Scholarship level. Proportion of students even attempting scholarship may be as interesting as the success rate.
+
+---
+
+### P7 — Labels, annotation and narrative fixes
+
+- Rename `European` → `NZ European / Pākehā` consistently across all charts
+- Add year annotation markers on all timeline charts: 2020 (COVID), 2023 (equity groups introduced), 2024 (NCEA reform)
+- Clarify equity group labels: "Fewer resources (low decile equivalent)" etc.
+- Update the equity section narrative to reference the correct metric once P0 is done
+
+---
+
+## Suggested Build Order
+
+| Priority | Change | Effort |
+|---|---|---|
+| P0 | Fix metric bug in EquityGapVisualizer | ~30 min |
+| P1 | Māori vs non-Māori toggle | ~1 hr |
+| P3 | Stacked grade distribution chart | ~2 hrs |
+| P2 | Equity group section + API change | ~3 hrs |
+| P4 | YoY delta chart | ~2 hrs |
+| P7 | Labels and annotations | ~1 hr |
+| P5 | Scholarship + endorsement pages | ~4 hrs |
+| P6 | Correlation explorer | ~4 hrs |
+
+---
+
+## Data Constraints to Remember
+
+- No cross-tab: ethnicity × equity, ethnicity × region, etc. — always returns empty
+- Equity data: 2019–2024 only (not the full 10 years)
+- `achieved_rate` = Achieved grade only, NOT overall pass rate
+- Overall pass rate = `1 - not_achieved_rate`
+- Merit+Excellence rate = `merit_rate + excellence_rate`
+- `assessed_count` = population denominator — use for weighted averages when merging groups
+- Regional breakdown has no gender/ethnicity sub-breakdown
