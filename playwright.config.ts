@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: ['**/visual/**'],  // visual regression tests run via npm run test:visual
   fullyParallel: true,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
@@ -17,17 +18,15 @@ export default defineConfig({
     reuseExistingServer: !process.env['CI'],
   },
   projects: [
+    // Chromium only — firefox/webkit require separate `npx playwright install` and are not
+    // installed in this environment. To add cross-browser testing run:
+    //   npx playwright install firefox webkit
+    // then uncomment the entries below.
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
+    // { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+    // { name: 'webkit', use: { ...devices['Desktop Safari'] } },
   ],
 });

@@ -16,17 +16,18 @@ export const strings = {
   sections: {
     timeline: {
       heading: 'A decade of maths achievement',
-      narrative: `Between 2015 and 2024, the proportion of students achieving in NCEA Mathematics
-        has shifted — shaped by curriculum changes, COVID disruptions in 2020–2021,
-        and the introduction of new NCEA level reforms in 2024. Toggle between levels
-        to see how the story changes.`,
+      narrative: `Between 2015 and 2024, the fail rate in NCEA Mathematics has shifted — shaped by
+        COVID disruptions in 2020–2021 and the 2024 NCEA reform which sent fail rates sharply upward.
+        Switch the grouping to compare ethnic groups, equity groups, regions, or gender.
+        Change the metric to view fail rates, pass rates, or Merit/Excellence rates.`,
     },
     equity: {
       heading: 'Not every student starts from the same place',
       narrative: `The gaps in maths achievement between ethnic groups are persistent and significant.
-        Students who are Māori or Pacific Peoples consistently achieve at lower rates than their
-        peers. These are not gaps about ability — they reflect systemic inequities in how our
-        schools are resourced, supported, and connected to communities.`,
+        Māori and Pacific Peoples students consistently have higher fail rates and lower Merit/Excellence
+        rates than their peers — not because of ability, but because of systemic inequities in how
+        schools are resourced, supported, and connected to communities.
+        Toggle between "Fail rate", "Pass rate", and "Merit + Excellence" to see the full picture.`,
     },
     map: {
       heading: 'Where you live matters',

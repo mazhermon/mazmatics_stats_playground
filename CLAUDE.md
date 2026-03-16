@@ -93,20 +93,29 @@ npm run test:watch    # Watch mode
 
 ### E2E Tests (Playwright)
 ```bash
-npm run test:e2e      # Run e2e tests (chromium + firefox + webkit)
-npm run test:visual   # Run visual regression tests (chromium only)
+npm run test:e2e      # Run e2e tests — chromium only, 65 tests (~1.4 min)
+npm run test:visual   # Run visual regression tests — chromium only, 5 snapshot tests
 npx playwright test e2e/diagnostic.spec.ts --project=chromium --reporter=list  # diagnostic run
 ```
-- E2E tests in `e2e/` directory
-- Visual regression snapshots in `e2e/visual/snapshots/`
+- E2E tests in `e2e/` directory; visual specs excluded from main suite via `testIgnore`
+- Visual regression snapshots in `e2e/visual/snapshots/` (separate config — `playwright.visual.config.ts`)
 - Update visual snapshots: `npx playwright test --config=playwright.visual.config.ts --update-snapshots`
 - Screenshots from diagnostic tests saved to `e2e/screenshots/`
+- See `e2e-testing` skill for full patterns, timeout rules, and maintenance guide
 
 ### CRITICAL: Playwright macOS Sequoia Compatibility
 - Playwright 1.40.x bundled Chromium crashes with SIGSEGV on macOS 15 (Sequoia / Darwin 25.x)
 - Always use `@playwright/test` **1.58.0+**
 - After upgrading, run `npx playwright install chromium` to download compatible browser
-- Verify with: `npx playwright test e2e/diagnostic.spec.ts --project=chromium`
+- Firefox and WebKit require separate install: `npx playwright install firefox webkit`
+- Currently only Chromium is installed — config reflects this
+
+### CRITICAL: /nzqa-maths Test Timeouts
+The page fires 10+ parallel API requests on load. Any test that loads `/nzqa-maths` needs:
+```ts
+test.setTimeout(90000);
+await page.waitForLoadState('networkidle', { timeout: 75000 });
+```
 
 ## D3.js Patterns
 
@@ -242,8 +251,9 @@ This project includes Claude Code skills in `.claude/skills/`:
 - **frontend-design** — Anti-AI-slop frontend design principles
 - **remotion** — Programmatic video creation with React
 - **code-reviewer** — Security, performance, and quality review
-- **d3-visualization** — D3.js v7 best practices for React
+- **d3-visualization** — D3.js v7 best practices for React (includes stacked bar, delta chart, series toggle, annotation lines, Playwright testing patterns)
 - **threejs-viz** — Three.js / React Three Fiber patterns
 - **nextjs-ssr** — Next.js App Router and SSR strategies
-- **nzqa-data-research** — NZQA data sources, DB schema, API design, data structure facts
-- **creative-dataviz** — Creative visualisation types beyond bar charts: beeswarm, ridgeline, waffle, alluvial, bump, slope, horizon, chord, stream, scrollytelling, cartogram — with D3 patterns and NZQA-specific use cases
+- **nzqa-data-research** — NZQA data sources, DB schema, API design, data structure facts (READ BEFORE any NZQA work)
+- **creative-dataviz** — Creative visualisation types beyond bar charts: beeswarm, ridgeline, waffle, bump, slope, horizon, stream, cartogram
+- **e2e-testing** — Playwright test architecture, timeout rules, maintenance guide, debugging failures (READ BEFORE writing/fixing e2e tests)

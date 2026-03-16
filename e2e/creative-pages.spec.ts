@@ -155,9 +155,9 @@ test.describe('/nzqa-patterns page', () => {
 
   test('ridgeline level selector works', async ({ page }) => {
     const level3Btn = page.getByRole('button', { name: 'Level 3' }).nth(0);
+    await expect(level3Btn).toBeVisible();
     await level3Btn.click();
-    await expect(level3Btn).toHaveClass(/bg-violet-600/);
-    await page.waitForTimeout(1500);
+    await expect(level3Btn).toHaveClass(/bg-violet-600/, { timeout: 5000 });
   });
 
   test('horizon chart renders region rows', async ({ page }) => {

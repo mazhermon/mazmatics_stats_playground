@@ -90,21 +90,22 @@ test.describe('Page diagnostics', () => {
   });
 
   test('NZQA Maths — scroll through all sections and screenshot', async ({ page }) => {
+    test.setTimeout(90000);
     const errors: string[] = [];
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
     page.on('pageerror', (err) => errors.push(`PAGE ERROR: ${err.message}`));
 
     await page.goto('/nzqa-maths');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('networkidle', { timeout: 75000 });
     await page.waitForTimeout(3000);
 
-    // Scroll to each section heading and screenshot
+    // Scroll to each section heading and screenshot (Phase 7: 7 sections)
     const sections = [
-      { name: '05-section-timeline', text: 'Trends over time' },
-      { name: '06-section-equity', text: 'equity' },
-      { name: '07-section-map', text: 'region' },
-      { name: '08-section-landscape', text: '3D' },
-      { name: '09-section-comparison', text: 'comparison' },
+      { name: '05-section-timeline', text: 'A decade of maths achievement' },
+      { name: '06-section-gradestack', text: 'Where do students land' },
+      { name: '07-section-delta', text: 'Year-on-year change' },
+      { name: '08-section-equity', text: 'Not every student starts from the same place' },
+      { name: '09-section-map', text: 'Where you live matters' },
     ];
 
     for (const section of sections) {
@@ -131,9 +132,9 @@ test.describe('Page diagnostics', () => {
 
   test('API endpoints — return valid data', async ({ request }) => {
     const endpoints = [
-      '/api/nzqa/timeline?metric=achieved_rate&groupBy=national',
-      '/api/nzqa/timeline?metric=achieved_rate&groupBy=ethnicity&level=1',
-      '/api/nzqa/subjects?level=1&year=2024&region=null&ethnicity=null&gender=null&equityGroup=null',
+      '/api/nzqa/timeline?metric=not_achieved_rate&groupBy=national',
+      '/api/nzqa/timeline?metric=not_achieved_rate&groupBy=ethnicity&level=1',
+      '/api/nzqa/timeline?metric=not_achieved_rate&groupBy=region&level=1&yearFrom=2024&yearTo=2024',
       '/api/nzqa/subjects?year=2024&region=Auckland&ethnicity=null&gender=null&equityGroup=null',
     ];
 

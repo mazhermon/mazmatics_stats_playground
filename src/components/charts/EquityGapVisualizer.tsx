@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import { useNzqaData, type TimelineResponse, type TimelineGroupPoint } from '@/lib/hooks/useNzqaData';
 import { ETHNICITY_COLOURS, fmtRate } from '@/lib/palette';
@@ -8,6 +8,16 @@ import { playHoverTone, playSelectChord, playTransitionSweep, resumeAudio } from
 import { strings } from '@/lib/nzqa-strings';
 
 type GroupMode = 'ethnicity' | 'equity_index_group';
+
+// Metric options — some are API columns, some are computed from two API columns
+type MetricKey = 'not_achieved_rate' | 'pass_rate' | 'merit_excellence' | 'achieved_rate';
+
+const METRIC_OPTIONS: { key: MetricKey; label: string; apiMetric: string; apiMetric2?: string }[] = [
+  { key: 'not_achieved_rate', label: 'Fail rate (Not Achieved)', apiMetric: 'not_achieved_rate' },
+  { key: 'pass_rate',         label: 'Overall pass rate',         apiMetric: 'not_achieved_rate' },
+  { key: 'merit_excellence',  label: 'Merit + Excellence',        apiMetric: 'merit_rate', apiMetric2: 'excellence_rate' },
+  { key: 'achieved_rate',     label: 'Achieved only ⚠️',          apiMetric: 'achieved_rate' },
+];
 
 interface TooltipState {
   x: number;
@@ -18,7 +28,7 @@ interface TooltipState {
   visible: boolean;
 }
 
-const EQUITY_COLOURS: Record<string, string> = {
+const LOCAL_EQUITY_COLOURS: Record<string, string> = {
   'Fewer': '#EE6677',
   'Moderate': '#CCBB44',
   'Middle': '#CCBB44',
@@ -28,7 +38,6 @@ const EQUITY_COLOURS: Record<string, string> = {
   'Decile 8-10': '#4477AA',
 };
 
-// Display order — puts the gap story in visual order
 const ETHNICITY_ORDER = ['Pacific Peoples', 'Māori', 'Other', 'MELAA', 'Asian', 'NZ European / Pākehā', 'NZ European', 'European'];
 const EQUITY_ORDER = ['Fewer', 'Decile 1-3', 'Moderate', 'Middle', 'Decile 4-7', 'More', 'Decile 8-10'];
 
@@ -37,11 +46,44 @@ export function EquityGapVisualizer() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<GroupMode>('ethnicity');
   const [level, setLevel] = useState(1);
+  const [metric, setMetric] = useState<MetricKey>('not_achieved_rate');
   const [highlighted, setHighlighted] = useState<string | null>(null);
   const [tooltip, setTooltip] = useState<TooltipState>({ x: 0, y: 0, group: '', year: 0, value: 0, visible: false });
 
-  const url = `/api/nzqa/timeline?metric=achieved_rate&groupBy=${mode}&level=${level}`;
-  const { data, loading, error } = useNzqaData<TimelineResponse>(url);
+  const metricOpt = METRIC_OPTIONS.find((m) => m.key === metric) ?? METRIC_OPTIONS[0]!;
+
+  // Primary API fetch
+  const url1 = `/api/nzqa/timeline?metric=${metricOpt.apiMetric}&groupBy=${mode}&level=${level}`;
+  const { data: data1, loading, error } = useNzqaData<TimelineResponse>(url1);
+
+  // Secondary fetch only for merit_excellence (need to sum merit + excellence)
+  const url2 = metricOpt.apiMetric2
+    ? `/api/nzqa/timeline?metric=${metricOpt.apiMetric2}&groupBy=${mode}&level=${level}`
+    : null;
+  const { data: data2 } = useNzqaData<TimelineResponse>(url2);
+
+  // Combine and transform data based on selected metric
+  const computedData = useMemo(() => {
+    if (!data1) return null;
+    const points = data1.data as TimelineGroupPoint[];
+
+    if (metric === 'pass_rate') {
+      // 1 - not_achieved_rate
+      return points.map((d) => ({ ...d, value: d.value !== null ? 1 - d.value : d.value }));
+    }
+
+    if (metric === 'merit_excellence' && data2) {
+      // merit_rate + excellence_rate
+      const pts2 = data2.data as TimelineGroupPoint[];
+      const map2 = new Map(pts2.map((d) => [`${d.group_label}|${d.year}|${d.level}`, d.value]));
+      return points.map((d) => {
+        const exc = map2.get(`${d.group_label}|${d.year}|${d.level}`) ?? 0;
+        return { ...d, value: d.value + exc };
+      });
+    }
+
+    return points;
+  }, [data1, data2, metric]);
 
   const handleModeChange = useCallback((m: GroupMode) => {
     resumeAudio();
@@ -51,9 +93,9 @@ export function EquityGapVisualizer() {
   }, []);
 
   useEffect(() => {
-    if (!data || !svgRef.current || !containerRef.current) return;
+    if (!computedData || !svgRef.current || !containerRef.current) return;
 
-    const points = data.data as TimelineGroupPoint[];
+    const points = computedData;
     if (points.length === 0) return;
 
     const container = containerRef.current;
@@ -70,7 +112,7 @@ export function EquityGapVisualizer() {
       return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
     });
 
-    const colours = mode === 'ethnicity' ? ETHNICITY_COLOURS : EQUITY_COLOURS;
+    const colours = mode === 'ethnicity' ? ETHNICITY_COLOURS : LOCAL_EQUITY_COLOURS;
 
     const svg = d3.select(svgRef.current);
     svg.attr('viewBox', `0 0 ${W} ${H}`);
@@ -134,7 +176,7 @@ export function EquityGapVisualizer() {
       .y((d) => yScale(d.value))
       .curve(d3.curveMonotoneX);
 
-    // Pre-compute collision-free y positions for end labels (min 12px gap)
+    // Collision-free end labels
     const labelPositions = new Map<string, number>();
     {
       const lastPoints = groups.map((group) => {
@@ -143,7 +185,6 @@ export function EquityGapVisualizer() {
         return { group, y: last ? yScale(last.value) + 4 : null };
       }).filter((d): d is { group: string; y: number } => d.y !== null);
 
-      // Sort by desired y, spread so no two are within 12px
       lastPoints.sort((a, b) => a.y - b.y);
       const MIN_GAP = 12;
       for (let k = 1; k < lastPoints.length; k++) {
@@ -175,7 +216,6 @@ export function EquityGapVisualizer() {
         .attr('stroke-opacity', opacity)
         .attr('d', line);
 
-      // End label
       const last = groupPoints[groupPoints.length - 1];
       if (last) {
         g.selectAll<SVGTextElement, unknown>(`.end-label-${i}`)
@@ -193,7 +233,7 @@ export function EquityGapVisualizer() {
           .text(group.replace(' / Pākehā', '').replace(' Region', ''));
       }
 
-      // Invisible hover area per group
+      // Invisible hover area
       g.selectAll<SVGPathElement, unknown>(`.hover-line-${i}`)
         .data([groupPoints])
         .join('path')
@@ -203,7 +243,7 @@ export function EquityGapVisualizer() {
         .attr('stroke-width', 20)
         .attr('d', line)
         .style('cursor', 'pointer')
-        .on('mouseenter', function (event: MouseEvent) {
+        .on('mouseenter', function () {
           resumeAudio();
           const avg = d3.mean(groupPoints, (d) => d.value) ?? 0;
           playHoverTone(avg, 0.06);
@@ -231,12 +271,15 @@ export function EquityGapVisualizer() {
     });
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, highlighted]);
+  }, [computedData, highlighted]);
+
+  const currentMetricLabel = metricOpt.label.replace(' ⚠️', '');
 
   return (
     <div className="space-y-4">
       {/* Controls */}
       <div className="flex flex-wrap gap-4 items-center">
+        {/* Group mode */}
         <div className="flex gap-2">
           {(['ethnicity', 'equity_index_group'] as GroupMode[]).map((m) => (
             <button
@@ -252,6 +295,8 @@ export function EquityGapVisualizer() {
             </button>
           ))}
         </div>
+
+        {/* Level */}
         <div className="flex gap-2">
           {[1, 2, 3].map((lvl) => (
             <button
@@ -264,7 +309,39 @@ export function EquityGapVisualizer() {
             </button>
           ))}
         </div>
+
+        {/* Metric */}
+        <div className="flex gap-2 flex-wrap">
+          {METRIC_OPTIONS.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => { resumeAudio(); setMetric(opt.key); setHighlighted(null); }}
+              className={`px-3 py-1 rounded text-xs font-mono transition-all cursor-pointer
+                ${metric === opt.key
+                  ? 'bg-slate-600 text-white border border-slate-500'
+                  : 'text-slate-500 border border-slate-700 hover:border-slate-500'
+                }`}
+              title={opt.key === 'achieved_rate' ? '"Achieved only" is the minimum passing grade — does not include Merit or Excellence.' : undefined}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
+
+      {/* Achieved-only warning */}
+      {metric === 'achieved_rate' && (
+        <div className="text-xs font-mono text-amber-400/80 bg-amber-400/5 border border-amber-400/20 rounded-lg px-3 py-2">
+          ⚠️ &ldquo;Achieved only&rdquo; = the minimum passing grade. Students who got Merit or Excellence are <strong>not</strong> counted here.
+          Groups with more top grades (e.g. Asian) will appear to have <em>lower</em> achievement than groups with fewer Merit/Excellence passes.
+          Use &ldquo;Fail rate&rdquo; or &ldquo;Overall pass rate&rdquo; for a fair comparison.
+        </div>
+      )}
+
+      {/* Equity data range note */}
+      {mode === 'equity_index_group' && (
+        <p className="text-xs text-slate-500 font-mono">Equity group data available 2019–2024 only.</p>
+      )}
 
       {/* Chart */}
       <div ref={containerRef} className="relative w-full">
@@ -279,7 +356,7 @@ export function EquityGapVisualizer() {
           >
             <span className="text-slate-400">{tooltip.group} · {tooltip.year}</span>
             <br />
-            <span className="text-white font-semibold">{fmtRate(tooltip.value)} achieved</span>
+            <span className="text-white font-semibold">{fmtRate(tooltip.value)} {currentMetricLabel.toLowerCase()}</span>
           </div>
         )}
       </div>
@@ -288,4 +365,3 @@ export function EquityGapVisualizer() {
     </div>
   );
 }
-

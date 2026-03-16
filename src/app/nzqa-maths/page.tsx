@@ -7,6 +7,8 @@ import {
   RegionalMap,
   AchievementLandscape,
   ComparisonDashboard,
+  GradeStackChart,
+  DeltaChart,
 } from './NzqaMathsClient';
 
 export const metadata: Metadata = {
@@ -144,6 +146,37 @@ export default function NzqaMathsPage() {
             </p>
           </div>
           <TimelineExplorer />
+        </section>
+
+        <SectionDivider />
+
+        {/* Section 1b: Grade distribution over time */}
+        <section className="space-y-6">
+          <div className="space-y-3">
+            <GradientHeading>Where do students land?</GradientHeading>
+            <p className="text-slate-400 max-w-2xl leading-relaxed">
+              Each band shows the share of students landing in that grade tier each year.
+              Watch how COVID leniency (2020) temporarily collapsed the &ldquo;Not Achieved&rdquo; band,
+              and how the 2024 NCEA reform sent it sharply upward. Switch group to compare
+              how different communities experience these shifts.
+            </p>
+          </div>
+          <GradeStackChart />
+        </section>
+
+        <SectionDivider />
+
+        {/* Section 1c: Year-on-year change */}
+        <section className="space-y-6">
+          <div className="space-y-3">
+            <GradientHeading>Year-on-year change</GradientHeading>
+            <p className="text-slate-400 max-w-2xl leading-relaxed">
+              How much did the fail rate move each year compared to the one before?
+              The 2020 COVID leniency produced one of the largest single-year improvements on record,
+              while 2024&rsquo;s NCEA reform reversed that — with some groups hit far harder than others.
+            </p>
+          </div>
+          <DeltaChart />
         </section>
 
         <SectionDivider />

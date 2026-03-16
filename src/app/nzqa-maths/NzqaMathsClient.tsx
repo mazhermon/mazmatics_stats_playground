@@ -30,3 +30,13 @@ export const ComparisonDashboard = dynamic(
   () => import('@/components/charts/ComparisonDashboard').then((m) => ({ default: m.ComparisonDashboard })),
   { ssr: false, loading: () => <ChartSkeleton height={300} /> }
 );
+
+export const GradeStackChart = dynamic(
+  () => import('@/components/charts/GradeStackChart').then((m) => ({ default: m.GradeStackChart })),
+  { ssr: false, loading: () => <ChartSkeleton height={280} /> }
+);
+
+export const DeltaChart = dynamic(
+  () => import('@/components/charts/DeltaChart').then((m) => ({ default: m.DeltaChart })),
+  { ssr: false, loading: () => <ChartSkeleton height={300} /> }
+);

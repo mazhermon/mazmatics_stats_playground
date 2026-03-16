@@ -39,6 +39,61 @@ describe('strings shape (smoke)', () => {
   });
 });
 
+describe('narrative accuracy (Phase 7 — metric corrections)', () => {
+  const s = nzqaStringsModule.strings;
+
+  it('timeline narrative describes fail rates, not "achievement rates"', () => {
+    const narrative = s.sections.timeline.narrative.toLowerCase();
+    expect(narrative).toMatch(/fail/);
+  });
+
+  it('equity narrative mentions fail rates', () => {
+    const narrative = s.sections.equity.narrative.toLowerCase();
+    expect(narrative).toMatch(/fail/);
+  });
+
+  it('equity narrative does NOT use the old misleading "achieve at lower rates" phrasing', () => {
+    const narrative = s.sections.equity.narrative;
+    expect(narrative).not.toContain('achieve at lower rates');
+  });
+});
+
+describe('equityGroups completeness', () => {
+  const { equityGroups } = nzqaStringsModule.strings;
+
+  it('has entries for all equity group keys', () => {
+    expect(equityGroups).toHaveProperty('Fewer');
+    expect(equityGroups).toHaveProperty('Middle');
+    expect(equityGroups).toHaveProperty('More');
+    expect(equityGroups).toHaveProperty('Decile 1-3');
+    expect(equityGroups).toHaveProperty('Decile 4-7');
+    expect(equityGroups).toHaveProperty('Decile 8-10');
+  });
+
+  it('all equity group display values are non-empty strings', () => {
+    Object.values(equityGroups).forEach((v) => {
+      expect(typeof v).toBe('string');
+      expect(v.length).toBeGreaterThan(0);
+    });
+  });
+});
+
+describe('ethnicities display names', () => {
+  const { ethnicities } = nzqaStringsModule.strings;
+
+  it('"European" maps to "NZ European / Pākehā"', () => {
+    expect(ethnicities['European']).toBe('NZ European / Pākehā');
+  });
+
+  it('"NZ European" maps to "NZ European / Pākehā"', () => {
+    expect(ethnicities['NZ European']).toBe('NZ European / Pākehā');
+  });
+
+  it('"Māori" display name is "Māori"', () => {
+    expect(ethnicities['Māori']).toBe('Māori');
+  });
+});
+
 describe('ETHNICITY_COLOURS coverage', () => {
   it('every key in strings.ethnicities exists in ETHNICITY_COLOURS', () => {
     const ethnicityKeys = Object.keys(nzqaStringsModule.strings.ethnicities);

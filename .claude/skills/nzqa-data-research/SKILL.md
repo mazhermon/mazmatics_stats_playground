@@ -14,8 +14,8 @@ stacks:
 > **Context files to read alongside this skill:**
 > - `CLAUDE.md` — project conventions, architecture, code patterns
 > - `brand.md` — Mazmatics brand colours, fonts, tone of voice, design direction
-> - `plan.md` — full implementation plan (Phases 1–3)
-> - `.claude/SUMMARY.md` — session history and decisions log
+> - `summary.md` — current state, all phase decisions, known constraints (READ THIS FIRST)
+> - `plan.md` — future work ideas (P5/P6 — untapped tables, correlation ideas)
 
 ## Project Goal
 
@@ -140,8 +140,8 @@ These contain additional narrative context and tables not in the CSVs. Useful fo
 ## ⚠️ CRITICAL: What Was Actually Built (Read Before Any Code)
 
 ### The DB is seeded and live at `src/data/nzqa.db`
-- Run `node -e "const db = require('better-sqlite3')('src/data/nzqa.db',{readonly:true}); console.log(db.prepare('SELECT COUNT(*) as n FROM subject_attainment').get());"` to verify
-- subject_attainment: 834 rows (Mathematics - Statistics, 2015–2024)
+- `subject_attainment`: 834 rows (Mathematics - Statistics, 2015–2024)
+- Additional tables (not yet wired to UI): `scholarship`, `qualification_endorsement`, `literacy_numeracy`
 
 ### Macron Encoding Warning
 The source CSV files have `M?ori` (literal question mark, not ā). After any re-seed, run:
@@ -152,51 +152,77 @@ db.prepare("UPDATE subject_attainment SET ethnicity = REPLACE(ethnicity, 'M?ori'
 
 ### Actual Ethnicity Labels in DB (post-fix)
 - `Asian`
-- `European`
+- `European` (display as "NZ European / Pākehā" — DB value unchanged, map in `DISPLAY_LABELS`)
 - `Māori` (with macron — must fix after re-seed)
 - `Middle Eastern/Latin American/African` (long form, NOT "MELAA")
 - `Pacific Peoples`
 
 ### Actual Equity Group Labels in DB
-- `Fewer` (not "Low" or "Bottom")
-- `Moderate`
-- `More` (not "High" or "Top")
+- `Fewer` (display as "Fewer resources (equiv. low decile)")
+- `Moderate` (display as "Moderate resources")
+- `More` (display as "More resources (equiv. high decile)")
 - Pre-2023 decile bands: `Decile 1-3`, `Decile 4-7`, `Decile 8-10`
 
 ### CRITICAL: No Cross-Tabulation in Data
 Each CSV is a single-dimension breakdown. In `subject_attainment`:
 - National row: all of `ethnicity`, `gender`, `equity_index_group`, `region` are NULL
 - Ethnicity row: only `ethnicity` is non-null, all others NULL
-- Gender row: only `gender` is non-null, all others NULL
 - Region row: only `region` is non-null, all others NULL
-- Equity row: only `equity_index_group` is non-null, all others NULL
 
 **NO row has two non-null dimension columns.** Visualisations must not require cross-tabulation.
 
-### What `achieved_rate` Actually Means
-`achieved_rate` = proportion of students who received the "Achieved" NCEA grade band ONLY.
-It does NOT include Merit or Excellence. Total pass rate = `achieved_rate + merit_rate + excellence_rate`.
-The "Achieved" band alone can be higher for some groups even if their overall pass rate is lower (if fewer get Merit/Excellence). Do not interpret `achieved_rate` as the overall pass rate.
+### CRITICAL: `achieved_rate` ≠ Pass Rate
+`achieved_rate` = proportion of students who received the **Achieved grade band ONLY** (minimum pass).
+It does NOT include Merit or Excellence. Using it as "achievement" makes Asian students appear worst — they mostly earn Merit/Excellence, not just Achieved.
+
+Correct metrics:
+- `not_achieved_rate` — fail rate (**default for all charts**)
+- pass rate = `1 - not_achieved_rate` (computed client-side)
+- Merit+Excellence = `merit_rate + excellence_rate` (computed client-side from two API calls)
 
 ### Available API Endpoints
 ```
-GET /api/nzqa/subjects?level=1&year=2024&region=null&ethnicity=null&gender=null&equityGroup=null
-  → Passing ?param=null means IS NULL (only national rows)
-  → Omitting a param means no filter on that column (returns all variants)
+GET /api/nzqa/timeline
+  ?metric=not_achieved_rate    ← not_achieved_rate | achieved_rate | merit_rate | excellence_rate
+  &groupBy=national            ← national | ethnicity | equity_index_group | region | gender
+  &level=1                     ← 1 | 2 | 3
+  &yearFrom=2015 &yearTo=2024  ← optional range filter
+  national response: { year, level, value, assessed_count }
+  grouped response:  { year, level, group_label, value, assessed_count }
 
-GET /api/nzqa/timeline?metric=achieved_rate&groupBy=ethnicity&level=1
-  → groupBy: national | ethnicity | equity_index_group | region | gender
-  → Returns: { data: [{ year, level, group_label, value, assessed_count }] }
-  → This is the correct endpoint for year × group visualisations
+GET /api/nzqa/subjects
+  ?year=2024 &level=1 &region=Auckland &ethnicity=null &gender=null &equityGroup=null
+  ⚠️  param=null (string) → adds IS NULL to SQL → returns NATIONAL rows, NOT regional
+  ⚠️  NEVER use subjects API for regional data — use timeline?groupBy=region instead
+  Correct use: drilldown for a specific region's grade breakdown by level
 ```
 
-### RegionalMap Drilldown
-Clicking a region shows NCEA Level 1/2/3 breakdown for that region (not ethnicity — no cross-tab data).
-URL: `/api/nzqa/subjects?year=2024&region=Auckland&ethnicity=null&gender=null&equityGroup=null`
+### Chart Inventory (all built and rendering)
+1. **TimelineExplorer** — line chart with metric/groupBy/year-range/series-toggle controls
+2. **GradeStackChart** — stacked area (NA/Achieved/Merit/Excellence bands) over time
+3. **DeltaChart** — diverging bar, year-on-year fail rate change
+4. **EquityGapVisualizer** — bar chart by group with metric selector
+5. **RegionalMap** — choropleth + ranking panel + grade drilldown; uses `timeline?groupBy=region`
+6. **AchievementLandscape** — Three.js 3D terrain (ethnicity × year × fail rate)
+7. **ComparisonDashboard** — heatmap (year × group)
 
-### ComparisonDashboard Heatmap
-Uses `/api/nzqa/timeline` — X axis = year (2015–2024), Y axis = group labels from selected groupBy.
-Do NOT use the subjects API for cross-tabulation (no data exists).
+### TopoJSON Map Notes
+- File: `public/geo/nz-regions.topojson`
+- Object key: `regions`; feature property: `REGC_name` (includes " Region" suffix, e.g. "Auckland Region")
+- NZQA region names have no suffix (e.g. "Auckland") — use `NZQA_TO_TOPOJSON` dict in `RegionalMap.tsx`
+- Exception: DB has `Manawatu-Whanganui` (no macron), TopoJSON has `Manawatū-Whanganui Region`
+
+### Māori / non-Māori Computation Pattern
+No DB column for non-Māori. Computed client-side:
+- Fetch `groupBy=ethnicity`
+- Keep Māori rows as-is
+- non-Māori = `assessed_count`-weighted average of all other ethnic groups per year+level
+- `weightedMean(values, weights)` — returns 0 when `totalWeight === 0`
+
+### Equity Data Constraint
+Equity group data only available 2019–2024. When equity groupBy is active, always:
+- Auto-clamp `yearFrom` to 2019
+- Show a data-range note in the UI
 
 ## Important Data Notes
 

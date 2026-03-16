@@ -565,3 +565,112 @@ Use `d3.schemePiYG`, `d3.schemePRGn`, `d3.schemeSpectral` for colorblind accessi
 - Zoom/pan works smoothly
 - No console errors
 - Mobile touch interactions supported
+
+---
+
+## Production Patterns (from NZQA project)
+
+### Stacked Bar Chart (d3.stack with 4 parallel fetches)
+
+```tsx
+// Combine N parallel API results into stack rows
+const stackData = useMemo(() => {
+  if (!naData || !achData) return [];
+  return years.map(year => ({
+    year,
+    not_achieved: naData.find(d => d.year === year)?.value ?? 0,
+    achieved:     achData.find(d => d.year === year)?.value ?? 0,
+    merit:        merData?.find(d => d.year === year)?.value ?? 0,
+    excellence:   excData?.find(d => d.year === year)?.value ?? 0,
+  }));
+}, [naData, achData, merData, excData]);
+
+// D3 stack
+const stack = d3.stack<StackRow>().keys(['not_achieved','achieved','merit','excellence'])
+  .order(d3.stackOrderNone).offset(d3.stackOffsetNone);
+const series = stack(stackData);
+
+svg.selectAll('.layer').data(series).join('g')
+  .attr('fill', (_, i) => colours[i])
+  .selectAll('rect').data(d => d).join('rect')
+    .attr('x', d => xScale(String(d.data.year))!)
+    .attr('y', d => yScale(d[1]))
+    .attr('height', d => yScale(d[0]) - yScale(d[1]))
+    .attr('width', xScale.bandwidth());
+```
+
+**Key:** fill missing year/group combos with `0` before stacking — gaps break the offset.
+
+### Diverging Bar Chart (year-on-year delta)
+
+```tsx
+// delta positive = improvement (fail rate fell)
+const delta = -(curr - prev);
+
+const yZero = yScale(0);
+svg.selectAll('.bar').data(deltas).join('rect')
+  .attr('y', d => d.delta >= 0 ? yScale(d.delta) : yZero)
+  .attr('height', d => Math.abs(yScale(d.delta) - yZero))
+  .attr('fill', d => d.delta >= 0 ? '#10b981' : '#ef4444');
+```
+
+### Clickable Series Legend (fade rather than remove)
+
+```tsx
+// Fading keeps axis stable — never fully remove hidden lines
+const [hiddenSeries, setHiddenSeries] = useState(new Set<string>());
+
+// In D3 useEffect
+svg.selectAll('.line-group')
+   .style('opacity', d => hiddenSeries.has(d.key) ? 0.15 : 1);
+```
+
+### Conditional Second API Fetch (derived metrics)
+
+```tsx
+// null URL = skip fetch; useNzqaData returns { data: null, loading: false }
+const url2 = metric === 'merit_excellence'
+  ? `/api/nzqa/timeline?metric=merit_rate&groupBy=${groupBy}&level=${level}`
+  : null;
+const { data: meritData } = useNzqaData<TimelineResponse>(url2);
+```
+
+### Annotation Vertical Lines
+
+```tsx
+const ANNOTATIONS = [
+  { year: 2020, label: 'COVID-19' },
+  { year: 2023, label: 'Equity reform' },
+  { year: 2024, label: 'NCEA reform' },
+];
+ANNOTATIONS.filter(a => a.year >= yearFrom && a.year <= yearTo).forEach(ann => {
+  const x = xScale(String(ann.year));
+  if (!x) return;
+  svg.append('line')
+    .attr('x1', x + xScale.bandwidth() / 2).attr('x2', x + xScale.bandwidth() / 2)
+    .attr('y1', margin.top).attr('y2', h - margin.bottom)
+    .attr('stroke', '#94a3b8').attr('stroke-dasharray', '4,4').attr('stroke-width', 1);
+});
+```
+
+### Playwright Testing D3 Charts
+
+```ts
+// 1. SVG count at initial load ≠ total charts (below-fold lazy-render on scroll)
+//    Test >= 3 at load, not >= total chart count
+expect(await page.locator('svg').count()).toBeGreaterThanOrEqual(3);
+
+// 2. Wait for D3 render after networkidle
+await page.waitForLoadState('networkidle');
+await page.waitForTimeout(4000); // D3 renders async after data arrives
+
+// 3. Increase timeout for pages with many parallel API fetches
+await page.waitForLoadState('networkidle', { timeout: 60000 });
+
+// 4. Per-test timeout when clicking triggers re-fetches
+test.setTimeout(60000);
+
+// 5. Test D3-drawn elements by class (D3 adds classes via data binding)
+const regions = page.locator('path.region');
+expect(await regions.count()).toBeGreaterThan(10);
+```
