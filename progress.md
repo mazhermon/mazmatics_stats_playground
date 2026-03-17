@@ -33,11 +33,52 @@
 
 **Final result: 65/65 e2e + 87 unit + 5 visual — all green**
 
+---
+
+## Phase 8 — Primary School Maths Feature ✅ COMPLETE (2026-03-17)
+
+### Build tasks
+
+- [x] DB schema + seed script (`scripts/seed-primary.ts`) → `src/data/primary.db`
+  - 4 tables: timss_nz_yr5 (21 rows), timss_intl_2023 (21 rows), nmssa_maths (20 rows), curriculum_insights_maths (6 rows)
+- [x] DB accessor: `src/lib/db/primary.ts` + TypeScript types
+- [x] API route: `src/app/api/primary/timss/route.ts` (type=trend|intl)
+- [x] API route: `src/app/api/primary/nmssa/route.ts` (yearLevel, groupType params)
+- [x] API route: `src/app/api/primary/curriculum-insights/route.ts`
+- [x] Chart: `TIMSSTrendChart.tsx` — D3 line, NZ 1995–2023, AUS/ENG context lines, gender toggle
+- [x] Chart: `TIMSSWorldRanking.tsx` — horizontal bar, 21 countries, NZ highlighted, intl avg line
+- [x] Chart: `NMSSAEquityGaps.tsx` — grouped bars Y4 vs Y8, ethnicity/decile/gender, CI error bars
+- [x] Chart: `CurriculumInsightsPipeline.tsx` — stacked bar % meeting/behind at Y3/Y6/Y8, 2023/2024 toggle
+- [x] Client wrapper: `src/app/primary-maths/PrimaryMathsClient.tsx` (ssr: false dynamic imports)
+- [x] Page: `src/app/primary-maths/page.tsx` (4 sections, hero stats, cross-link to secondary)
+- [x] Landing page updated: `src/app/page.tsx` — primary-maths nav card added
+
+### Quality checks
+
+- [x] `tsc --noEmit` — clean
+- [x] `npm run lint` — clean
+- [x] All 3 APIs verified returning correct data via curl
+
+### What's NOT done yet (Phase 8 optional / Phase 9)
+
+- E2E tests for /primary-maths (not yet written)
+- NMSSA 2013 + 2018 full tables (PDFs available, need pdftotext extraction)
+- Curriculum Insights ethnicity/gender breakdowns (needs Claude Desktop browser)
+- Visual regression snapshots for primary-maths
+
+---
+
 ## Ready for next session
 
-**Suggested next focus: P5 — Untapped DB tables**
+**Suggested next focus — choose one:**
+
+**A) Phase 8 tests** — Add Playwright e2e tests for /primary-maths (4 API endpoints + 4 charts)
+
+**B) Phase 8 data enrichment** — Extract NMSSA 2013/2018 from PDFs; use Claude Desktop for CI ethnicity breakdowns; add NMSSA trend chart (2013→2018→2022)
+
+**C) Phase 9 — NZQA secondary untapped tables:**
 - `scholarship` table — ethnicity/equity/region breakdown of NZ's top academic award
 - `qualification_endorsement` — Merit/Excellence endorsement of full NCEA qualifications
 - `literacy_numeracy` — co-attainment of literacy/numeracy co-requisite
 
-See `summary.md` → "What's Next" for full details.
+See `summary.md` for full context of all existing features.

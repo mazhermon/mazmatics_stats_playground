@@ -1,8 +1,43 @@
 # Session Summary
 
-## Current Project State (as of 2026-03-17)
+## Current Project State (as of 2026-03-17, updated Phase 8)
 
 ### What's been built — complete picture
+
+#### `/primary-maths` — Primary School Maths Feature (Phase 8 — NEW)
+
+| Chart | File | Notes |
+|---|---|---|
+| TIMSSTrendChart | `src/components/charts/TIMSSTrendChart.tsx` | D3 line — NZ 1995–2023 TIMSS, AUS/ENG context, gender toggle |
+| TIMSSWorldRanking | `src/components/charts/TIMSSWorldRanking.tsx` | Horizontal bar — 21 countries, NZ highlighted, intl avg line |
+| NMSSAEquityGaps | `src/components/charts/NMSSAEquityGaps.tsx` | Grouped bar — Y4 vs Y8, ethnicity/decile/gender, CI error bars |
+| CurriculumInsightsPipeline | `src/components/charts/CurriculumInsightsPipeline.tsx` | Stacked bar — % meeting/behind at Y3/Y6/Y8, 2023 vs 2024 toggle |
+
+Page: `src/app/primary-maths/page.tsx` — 4 sections + hero + cross-link to secondary
+Client wrapper: `src/app/primary-maths/PrimaryMathsClient.tsx` — all chart dynamic imports (ssr: false)
+
+**Database:** `src/data/primary.db` — seeded via `scripts/seed-primary.ts`
+```
+timss_nz_yr5 (21 rows) — NZ Year 5 TIMSS scores 1995–2023 by national/gender
+timss_intl_2023 (21 rows) — 2023 international country comparison
+nmssa_maths (20 rows) — NMSSA 2022 Y4+Y8 mean scale scores by ethnicity/decile/gender
+curriculum_insights_maths (6 rows) — 2023+2024 % meeting benchmarks at Y3/Y6/Y8
+```
+
+**DB accessor:** `src/lib/db/primary.ts` — `getPrimaryDb()` + typed row interfaces
+
+**API routes:**
+```
+GET /api/primary/timss?type=trend|intl
+GET /api/primary/nmssa?yearLevel=4|8|all&groupType=all|national|gender|ethnicity|decile
+GET /api/primary/curriculum-insights
+```
+
+**Landing page:** `src/app/page.tsx` — primary-maths nav card added (first card)
+
+**Tests:** No e2e tests yet for /primary-maths (Phase 8 optional). tsc + lint clean. All APIs verified.
+
+---
 
 #### `/nzqa-maths` — Core Explorer (7 charts, all rendering, all tested)
 
@@ -170,7 +205,12 @@ GET /api/nzqa/subjects
 
 ### What's Next (future sessions)
 
-**P5 — Untapped DB tables** (new pages/sections):
+**Phase 8 completions (optional):**
+- E2E tests for `/primary-maths` — 4 API endpoints + page load + 4 chart sections
+- NMSSA 2013 + 2018 data — extract from S3 PDFs (pdftotext), seed into nmssa_maths table, add NMSSA trend chart (2013→2018→2022)
+- Curriculum Insights demographic breakdowns — Claude Desktop browser needed for ethnicity/gender % at each year level
+
+**Phase 9 / P5 — NZQA secondary untapped tables** (new pages/sections):
 - `scholarship` table — who gets NZ's highest academic award by ethnicity/equity/region
 - `qualification_endorsement` table — Merit/Excellence for full NCEA qualifications
 - `literacy_numeracy` table — co-attainment of literacy/numeracy co-requisite

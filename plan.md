@@ -1,6 +1,7 @@
-# Current Work: Phase 8 — Primary School Maths Feature
+# Current Work: Phase 8 — Primary School Maths Feature ✅ COMPLETE (2026-03-17)
 
-**Research complete.** See `research-findings.md` for all data, sources, and extracted tables.
+**Built.** `/primary-maths` page live with 4 charts, 3 API routes, primary.db seeded.
+See `summary.md` for full details of what was built.
 Read `nz-primary-school-research` skill before any primary school feature work.
 
 ---
