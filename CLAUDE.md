@@ -255,5 +255,6 @@ This project includes Claude Code skills in `.claude/skills/`:
 - **threejs-viz** — Three.js / React Three Fiber patterns
 - **nextjs-ssr** — Next.js App Router and SSR strategies
 - **nzqa-data-research** — NZQA data sources, DB schema, API design, data structure facts (READ BEFORE any NZQA work)
+- **nz-primary-school-research** — NZ primary/intermediate school data sources, research findings, schema ideas (READ BEFORE any primary school feature work; run /ralph-loop to populate)
 - **creative-dataviz** — Creative visualisation types beyond bar charts: beeswarm, ridgeline, waffle, bump, slope, horizon, stream, cartogram
 - **e2e-testing** — Playwright test architecture, timeout rules, maintenance guide, debugging failures (READ BEFORE writing/fixing e2e tests)
