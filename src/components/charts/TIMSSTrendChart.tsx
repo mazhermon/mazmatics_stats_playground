@@ -261,9 +261,12 @@ export function TIMSSTrendChart() {
       // NZ national as ghost for context
       g.append('path').datum(national).attr('fill', 'none').attr('stroke', NZ_COLOUR).attr('stroke-width', 1.5).attr('stroke-dasharray', '3,3').attr('opacity', 0.4).attr('d', mainLine);
 
-      // Gender dots
-      for (const [data, colour] of [[girls, GIRLS_COLOUR], [boys, BOYS_COLOUR]] as [TimssRow[], string][]) {
-        g.selectAll(`.dot-${colour}`)
+      // Gender dots — use safe label-based class names (hex colours are invalid CSS selectors)
+      for (const [data, colour, label] of [
+        [girls, GIRLS_COLOUR, 'girls'],
+        [boys,  BOYS_COLOUR,  'boys'],
+      ] as [TimssRow[], string, string][]) {
+        g.selectAll(`.dot-${label}`)
           .data(data)
           .join('circle')
           .attr('cx', (d) => x(d.year)!)

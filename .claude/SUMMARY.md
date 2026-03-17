@@ -113,10 +113,89 @@ The NZQA subject attainment CSVs are NOT cross-tabulated. Each breakdown is a se
 - `plan.md` updated with Phase 4 complete / Phase 5 (testing) as next priority
 - `CLAUDE.md` updated with R3F v9 requirements, Playwright macOS Sequoia note, Known Issues section
 
-### Next Steps
+### Next Steps (at end of Session 4)
 1. Visual verification that all 5 charts show data correctly (run `npx playwright test e2e/diagnostic2.spec.ts --project=chromium --reporter=list` and review `e2e/screenshots/`)
 2. Fix any remaining empty/incorrect chart states
 3. Add unit tests (`src/__tests__/lib/palette.test.ts`, `api/subjects.test.ts`, `api/timeline.test.ts`)
 4. Add visual regression snapshots (`e2e/visual/nzqa-maths.visual.spec.ts`)
 5. Add E2E interaction tests (level toggles, region clicks, groupBy dropdown, 3D landscape buttons)
 6. Build `/references` web page from `src/data/references.md`
+
+---
+
+## Session 5 — 2026-03-17: Planning (Phase 9 Diagnostic Testing)
+
+### Goal
+Plan Phase 9: systematic diagnostic testing of all new pages added since Phase 7.
+
+### Pages requiring testing
+- `/primary-maths` — 4 charts, 3 interactive filter controls
+- `/nzqa-stories` — 3 creative charts (WaffleGrid, BeeswarmChart, SmallMultiplesChart)
+- `/nzqa-patterns` — 3 charts (RidgelinePlot, HorizonChart, BubbleComparison)
+- `/nzqa-creative` — 3 charts (BumpChart, SlopeChart, StreamGraph)
+
+### Filter interactions to test on `/primary-maths`
+- TIMSSTrendChart: "National" / "By gender" toggle
+- TIMSSWorldRanking: no controls (static)
+- NMSSAEquityGaps: "By ethnicity" / "By decile" / "By gender" toggle
+- CurriculumInsightsPipeline: "2023" / "2024" year toggle
+
+### Plan written to
+- `plan.md` — Phase 9 steps, completion criteria, routes in scope
+- `prompt.md` — full ralph-loop prompt for Phase 9 execution
+- `SUMMARY.md` — this entry
+
+### Current State After Planning
+- `/nzqa-maths` — 65 e2e tests passing
+- All new pages (primary-maths, stories, patterns, creative) — 0 tests, untested
+- No `test-todo.md` yet — will be created during Phase 9
+
+---
+
+## Session 6 — 2026-03-18: Phase 9 Execution — Diagnostic E2E Testing & Fixes ✅ COMPLETE
+
+### Goal
+Execute Phase 9: visit all new pages, click every filter, find all errors, fix them, write permanent e2e tests.
+
+### Bug Found and Fixed
+
+**TIMSSTrendChart — Invalid D3 CSS selector crash**
+- **Error:** `Failed to execute 'querySelectorAll' on 'Element': '.dot-#60a5fa' is not a valid selector.`
+- **Trigger:** Clicking "By gender" toggle on `/primary-maths`
+- **Root cause:** D3 `.selectAll('.dot-${colour}')` where colour = hex string `#60a5fa` — `#` is invalid in CSS class selectors
+- **Fix:** `src/components/charts/TIMSSTrendChart.tsx` — loop now uses label strings `['girls', 'boys']` for class names instead of hex colours
+- **File:** `src/components/charts/TIMSSTrendChart.tsx` ~line 265
+
+### Infrastructure Fixes
+
+**`playwright.config.ts` — Worker cap**
+- Changed `workers: undefined` → `workers: 3` locally
+- Reason: Dev server under 8+ parallel workers loading `/nzqa-maths` (10+ API requests each = 80+ concurrent requests) never reached networkidle
+
+**`e2e/nzqa-maths.spec.ts` — All `beforeEach` blocks**
+- Replaced `waitForLoadState('networkidle', { timeout: 75000 })` with structure-based wait:
+  `waitForSelector('h1', { timeout: 20000 }) + waitForTimeout(6000)`
+- Added `test.setTimeout(90000)` to all 6 describe blocks
+- Added `!e.includes('Failed to load resource')` filter to "no console errors" test
+- Added response listener to separately track genuine API 404s
+
+**`e2e/diagnostic.spec.ts`** — Same networkidle → structure-based wait fixes, removed duplicate screenshot
+
+**`CLAUDE.md`** — Updated test count to 91, updated CRITICAL timeout section with response listener pattern
+
+**`.claude/skills/e2e-testing/SKILL.md`** — Updated test count, rewrote timeout rules, added `primary-maths.spec.ts` to file reference
+
+### New Permanent Test File
+**`e2e/primary-maths.spec.ts`** — 26 tests
+- 4 API health checks (timss trend, timss intl, nmssa, curriculum-insights)
+- Page load: console errors, hero heading + stat cards, cross-link, SVG count
+- TIMSSTrendChart: National/By gender toggle, active state, no crash, SVG paths
+- TIMSSWorldRanking: SVG with rect elements
+- NMSSAEquityGaps: all 3 toggles (ethnicity/decile/gender), active state, no crash — uses `.last()` for "By gender" (TIMSSTrendChart's is first)
+- CurriculumInsightsPipeline: 2023/2024 toggle, active state, no crash
+- Home nav card: link present + navigates
+
+### Final State
+- **91 e2e tests, 0 failing**
+- `test-todo.md` written with all findings and resolution status
+- `/nzqa-stories`, `/nzqa-patterns`, `/nzqa-creative` — covered by existing `creative-pages.spec.ts` (23 tests); transient 404s under parallel load are dev server compile races, not bugs

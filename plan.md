@@ -1,4 +1,68 @@
-# Current Work: Phase 8 — Primary School Maths Feature ✅ COMPLETE (2026-03-17)
+# Current Work: Phase 10 — NZQA Secondary Untapped Tables + Phase 8 Data Enrichment
+
+**Goal:** Two parallel tracks of work:
+- **Track A (Phase 8 enrichment):** Add NMSSA trend (2013→2018→2022) and Curriculum Insights demographic breakdowns
+- **Track B (Phase 10 — new pages):** Build new pages/sections using already-seeded DB tables (`scholarship`, `qualification_endorsement`, `literacy_numeracy`)
+
+## Track A — Phase 8 Enrichment
+
+| Item | Status |
+|------|--------|
+| Extract NMSSA 2013 + 2018 from S3 PDFs (poppler/pdftotext available) | ❌ todo |
+| Add NMSSA trend chart (2013→2018→2022) to `/primary-maths` | ❌ todo |
+| Demographic breakdowns for Curriculum Insights 2023–2024 (needs Claude Desktop browser) | ❌ todo |
+
+## Track B — Phase 10 New Secondary Pages
+
+| Page/Section | Data Source | Charts |
+|---|---|---|
+| `/nzqa-scholarship` | `scholarship` table — already seeded | Ethnicity rates, equity rates, regional rates, trend over time |
+| `/nzqa-endorsement` | `qualification_endorsement` table — already seeded | Merit/Excellence rates by group, trend |
+| `/nzqa-literacy` | `literacy_numeracy` table — already seeded | Co-attainment rate by group, year-on-year |
+
+## Phase 10 Completion Criteria
+- At least one new secondary page live with real DB data
+- API route(s) for the new page
+- Full e2e tests (API health + page load + chart renders)
+- `npm run test:e2e` passes with new tests included
+
+---
+
+# Future Work: Security Hardening (pre-launch, no urgency yet)
+
+## Context
+The API routes (`/api/nzqa/`, `/api/primary/`) are internal Next.js route handlers — not a standalone public API. All data served is publicly sourced (NZQA, TIMSS, NMSSA). All routes are read-only GET requests, no write operations. No user accounts or private data yet.
+
+## Items to address before production launch
+
+### 1. SQL Injection audit ⚠️ most important
+Scan all API route handlers to confirm every user-supplied query param is passed through parameterised statements (prepared statements with `?` placeholders), not interpolated directly into SQL strings. better-sqlite3 supports prepared statements natively. This is the only meaningful attack surface given the read-only SQLite setup.
+- Files to audit: `src/app/api/nzqa/*/route.ts`, `src/app/api/primary/*/route.ts`
+- Use Shannon (`/shannon` skill) or manual review
+- Fix any raw string interpolation found
+
+### 2. Rate limiting
+Add rate limiting to API routes before going public to prevent abuse/scraping. Options:
+- Next.js middleware with an in-memory store (simple, no infra)
+- Upstash Redis + `@upstash/ratelimit` (production-grade, stateless)
+- Vercel's built-in rate limiting if deploying to Vercel
+- Not urgent until the app is publicly deployed and indexed
+
+### 3. Auth / login (revisit later)
+No user accounts exist yet. When auth is added (likely NextAuth.js or Clerk):
+- Revisit which API routes (if any) should be protected
+- Add CSRF protection if mutating state
+- Currently N/A — note to check back when auth work begins
+
+---
+
+# Previous Work: Phase 9 — Diagnostic E2E Testing & Fixes ✅ COMPLETE (2026-03-18)
+
+**All 91 e2e tests passing.** Bug found and fixed (TIMSSTrendChart invalid D3 CSS selector). `e2e/primary-maths.spec.ts` written (26 tests). All `nzqa-maths.spec.ts` timeouts fixed. See `test-todo.md` for full findings.
+
+---
+
+# Previous Work: Phase 8 — Primary School Maths Feature ✅ COMPLETE (2026-03-17)
 
 **Built.** `/primary-maths` page live with 4 charts, 3 API routes, primary.db seeded.
 See `summary.md` for full details of what was built.

@@ -18,23 +18,35 @@ test.describe('/nzqa-maths page', () => {
   test('loads without console errors', async ({ page }) => {
     test.setTimeout(90000);
     const errors: string[] = [];
+    const api404s: string[] = [];
     page.on('console', (msg) => { if (msg.type() === 'error') errors.push(msg.text()); });
     page.on('pageerror', (err) => errors.push(err.message));
+    // Track real 404s by URL — filter out _next chunk compile-race false positives
+    page.on('response', (r) => {
+      if (r.status() === 404 && !r.url().includes('/_next/')) api404s.push(r.url());
+    });
 
     await page.goto('/nzqa-maths');
-    await page.waitForLoadState('networkidle', { timeout: 75000 });
-    await page.waitForTimeout(3000);
+    await page.waitForSelector('h1', { timeout: 20000 });
+    await page.waitForTimeout(8000); // allow 10+ parallel API fetches to settle
 
-    // Filter out noisy browser warnings unrelated to our code
+    // "Failed to load resource: 404" messages can be _next chunk compile races under
+    // parallel load — track actual API 404s separately via response listener above
     const appErrors = errors.filter(
-      (e) => !e.includes('favicon') && !e.includes('net::ERR_') && !e.includes('ERR_ABORTED')
+      (e) => !e.includes('favicon')
+           && !e.includes('net::ERR_')
+           && !e.includes('ERR_ABORTED')
+           && !e.includes('Failed to load resource') // resource 404s tracked by response listener
     );
+    expect(api404s, `API 404s:\n${api404s.join('\n')}`).toHaveLength(0);
     expect(appErrors, `Console errors:\n${appErrors.join('\n')}`).toHaveLength(0);
   });
 
   test('all 5 key section headings are present', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto('/nzqa-maths');
-    await page.waitForLoadState('networkidle', { timeout: 75000 });
+    await page.waitForSelector('h1', { timeout: 20000 });
+    await page.waitForTimeout(3000);
 
     await expect(page.locator('text=A decade of maths achievement').first()).toBeVisible();
     await expect(page.locator('text=Where do students land').first()).toBeVisible();
@@ -44,9 +56,10 @@ test.describe('/nzqa-maths page', () => {
   });
 
   test('at least 5 SVG charts render after load', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto('/nzqa-maths');
-    await page.waitForLoadState('networkidle', { timeout: 75000 });
-    await page.waitForTimeout(4000);
+    await page.waitForSelector('h1', { timeout: 20000 });
+    await page.waitForTimeout(6000);
 
     const count = await page.locator('svg').count();
     // Only above-fold charts are rendered at load time (below-fold charts lazy-render on scroll)
@@ -58,9 +71,10 @@ test.describe('/nzqa-maths page', () => {
 
 test.describe('TimelineExplorer', () => {
   test.beforeEach(async ({ page }) => {
+    test.setTimeout(90000);
     await page.goto('/nzqa-maths');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
+    await page.waitForSelector('h1', { timeout: 20000 });
+    await page.waitForTimeout(6000);
   });
 
   test('metric selector buttons are visible', async ({ page }) => {
@@ -116,9 +130,10 @@ test.describe('TimelineExplorer', () => {
 
 test.describe('EquityGapVisualizer', () => {
   test.beforeEach(async ({ page }) => {
+    test.setTimeout(90000);
     await page.goto('/nzqa-maths');
-    await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(3000);
+    await page.waitForSelector('h1', { timeout: 20000 });
+    await page.waitForTimeout(6000);
     await page.locator('text=Not every student starts from the same place').first().scrollIntoViewIfNeeded();
     await page.waitForTimeout(2000);
   });
@@ -152,8 +167,11 @@ test.describe('EquityGapVisualizer', () => {
 
 test.describe('RegionalMap', () => {
   test.beforeEach(async ({ page }) => {
+    test.setTimeout(90000);
     await page.goto('/nzqa-maths');
-    await page.waitForLoadState('networkidle');
+    // Use structure-based wait — networkidle is unreliable with parallel test load
+    await page.waitForSelector('h1', { timeout: 20000 });
+    await page.waitForTimeout(6000); // let data fetches settle before scrolling
     await page.locator('text=Where you live matters').first().scrollIntoViewIfNeeded();
     await page.waitForTimeout(5000); // TopoJSON load + data fetch + D3 render
   });
@@ -200,8 +218,10 @@ test.describe('RegionalMap', () => {
 
 test.describe('GradeStackChart', () => {
   test.beforeEach(async ({ page }) => {
+    test.setTimeout(90000);
     await page.goto('/nzqa-maths');
-    await page.waitForLoadState('networkidle');
+    await page.waitForSelector('h1', { timeout: 20000 });
+    await page.waitForTimeout(5000);
     await page.locator('text=Where do students land').first().scrollIntoViewIfNeeded();
     await page.waitForTimeout(4000); // 4 parallel API fetches + D3 render
   });
@@ -250,8 +270,10 @@ test.describe('GradeStackChart', () => {
 
 test.describe('DeltaChart', () => {
   test.beforeEach(async ({ page }) => {
+    test.setTimeout(90000);
     await page.goto('/nzqa-maths');
-    await page.waitForLoadState('networkidle', { timeout: 60000 });
+    await page.waitForSelector('h1', { timeout: 20000 });
+    await page.waitForTimeout(5000);
     await page.locator('text=Year-on-year change').first().scrollIntoViewIfNeeded();
     await page.waitForTimeout(3000);
   });

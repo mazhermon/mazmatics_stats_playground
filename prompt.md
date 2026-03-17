@@ -1,39 +1,64 @@
-# Session Start — Phase 9
+# Session Start — Phase 10: NZQA Secondary Untapped Tables
 
-## What's happened
-- **Phase 7** (NZQA secondary data explorer) — complete
-- **Phase 8** (`/primary-maths` feature) — complete (2026-03-17)
+## What's done so far
+- **Phase 7** — NZQA secondary data explorer (`/nzqa-maths`) — 65 tests, complete
+- **Phase 8** — Primary school explorer (`/primary-maths`) — 4 charts, complete
+- **Phase 9** — Diagnostic E2E testing — 91 tests passing, all bugs fixed
 
-## What exists now
+## Current DB state
 
-### `/primary-maths` (Phase 8 — new)
-4 D3 charts: TIMSSTrendChart, TIMSSWorldRanking, NMSSAEquityGaps, CurriculumInsightsPipeline
-DB: `src/data/primary.db` — 4 tables, seeded via `scripts/seed-primary.ts`
-APIs: `/api/primary/timss`, `/api/primary/nmssa`, `/api/primary/curriculum-insights`
-tsc clean · lint clean · no e2e tests yet
+### nzqa.db — already seeded, untouched tables
+- `scholarship` — Outstanding/Scholarship/No Award rates by ethnicity, equity, region, year
+- `qualification_endorsement` — Merit/Excellence endorsement of full NCEA qualifications
+- `literacy_numeracy` — Co-attainment of literacy/numeracy co-requisite alongside maths
 
-### `/nzqa-maths` (Phase 7 — complete, tested)
-7 charts — all e2e tested (65/65 passing)
-87 unit tests · 5 visual snapshots
+### primary.db — seeded, live
+- `timss_nz_yr5`, `timss_intl_2023`, `nmssa_maths`, `curriculum_insights_maths`
 
 ## Read before doing anything
-1. `summary.md` — complete picture of all features built
-2. `plan.md` — current phase notes
-3. `CLAUDE.md` — project conventions, SSR rules, stack facts
+1. `nzqa-data-research` skill — DB schema, CSV sources, data structure facts (CRITICAL: no cross-tabulation)
+2. `e2e-testing` skill — timeout rules, test patterns
+3. `plan.md` — Phase 10 goals and tracks
+4. `CLAUDE.md` — project conventions, SSR rules
 
-## Suggested next focus — pick one
+## Phase 10 Task
 
-### A) Phase 8 e2e tests
-Write Playwright tests for `/primary-maths` — API health checks + page load + 4 chart sections.
-Pattern: see `e2e/nzqa-maths.spec.ts` and read `e2e-testing` skill first.
+### Track B — Build a new NZQA secondary page (start here)
 
-### B) Phase 8 data enrichment
-- Extract NMSSA 2013 + 2018 from S3 PDFs (poppler installed, pdftotext available)
-- Add NMSSA trend chart (2013→2018→2022) — 3 data points per group
-- Demographic breakdowns for Curriculum Insights 2023–2024 (needs Claude Desktop browser)
+Pick the most compelling untapped table. **Scholarship** is the recommended starting point:
+- It shows who earns NZ's highest academic award — a natural "top of the pipeline" story
+- Data already in DB: `scholarship` table
+- Builds on existing NZQA narrative established in `/nzqa-maths`
 
-### C) Phase 9 — NZQA secondary untapped tables
-Add new pages/sections using already-seeded DB tables:
-- `scholarship` — who earns NZ's highest academic award, by ethnicity/equity/region
-- `qualification_endorsement` — Merit/Excellence for full NCEA qualifications
-- `literacy_numeracy` — co-attainment of literacy+numeracy co-requisite alongside maths
+**Steps:**
+1. Read `nzqa-data-research` skill to understand `scholarship` table schema
+2. Inspect the `scholarship` table: `npx tsx -e "import Database from 'better-sqlite3'; const db = new Database('src/data/nzqa.db'); console.log(db.prepare('SELECT * FROM scholarship LIMIT 5').all()); console.log(db.prepare('SELECT DISTINCT year FROM scholarship').all()); console.log(db.prepare('SELECT DISTINCT group_type FROM scholarship').all());"`
+3. Design and build API route at `/api/nzqa/scholarship`
+4. Build the page at `/nzqa-scholarship` — similar structure to `/nzqa-maths`:
+   - Hero with compelling stat (e.g. "X% of Scholarship awards go to the top decile")
+   - Chart 1: Scholarship rate trend by ethnicity
+   - Chart 2: Equity breakdown (high/mid/low decile)
+   - Chart 3: Regional breakdown (if data available)
+5. Add nav card on home page
+6. Write `e2e/nzqa-scholarship.spec.ts` — API health + page load + chart renders
+7. Run `npm run test:e2e` — all tests must pass
+
+### Track A — Phase 8 Enrichment (do after Track B)
+- Extract NMSSA 2013 + 2018 PDFs with pdftotext (poppler installed)
+- Add NMSSA trend chart to `/primary-maths`
+- Curriculum Insights demographic breakdowns via Claude Desktop browser
+
+## Data constraints (always apply to NZQA secondary data)
+- No cross-tabulation — each breakdown is single-dimension only
+- Scholarship data: `Outstanding Award` / `Scholarship Award` / `No Award` bands
+- `achieved_rate` ≠ pass rate for scholarship (use the award rate columns directly)
+- Equity data may be 2019–2024 only (check actual years in DB)
+
+## Completion Promise
+<promise>PHASE_10_COMPLETE</promise>
+
+## After Phase 10 — Future Work
+- `qualification_endorsement` page — Merit/Excellence for full NCEA qualifications
+- `literacy_numeracy` page — co-attainment of literacy+numeracy alongside maths
+- Phase 8 NMSSA trend chart (Track A above)
+- Curriculum Insights demographic breakdowns

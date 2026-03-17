@@ -93,7 +93,7 @@ npm run test:watch    # Watch mode
 
 ### E2E Tests (Playwright)
 ```bash
-npm run test:e2e      # Run e2e tests — chromium only, 65 tests (~1.4 min)
+npm run test:e2e      # Run e2e tests — chromium only, 91 tests (~3.5 min)
 npm run test:visual   # Run visual regression tests — chromium only, 5 snapshot tests
 npx playwright test e2e/diagnostic.spec.ts --project=chromium --reporter=list  # diagnostic run
 ```
@@ -111,10 +111,22 @@ npx playwright test e2e/diagnostic.spec.ts --project=chromium --reporter=list  #
 - Currently only Chromium is installed — config reflects this
 
 ### CRITICAL: /nzqa-maths Test Timeouts
-The page fires 10+ parallel API requests on load. Any test that loads `/nzqa-maths` needs:
+The page fires 10+ parallel API requests on load. `waitForLoadState('networkidle')` is unreliable
+under parallel test load (multiple workers all loading `/nzqa-maths` simultaneously = 30+ concurrent
+requests, server never reaches 500ms silence). Use structure-based wait instead:
 ```ts
 test.setTimeout(90000);
-await page.waitForLoadState('networkidle', { timeout: 75000 });
+await page.waitForSelector('h1', { timeout: 20000 }); // page structure loaded
+await page.waitForTimeout(6000);                      // allow data fetches to settle
+// Then scroll to the section you need and wait further as needed
+```
+For "loads without console errors" tests, exclude resource 404s via a response listener:
+```ts
+const api404s: string[] = [];
+page.on('response', (r) => {
+  if (r.status() === 404 && !r.url().includes('/_next/')) api404s.push(r.url());
+});
+// ...and filter 'Failed to load resource' from console errors
 ```
 
 ## D3.js Patterns

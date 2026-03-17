@@ -13,7 +13,7 @@ stacks:
 ## Test Commands
 
 ```bash
-npm run test:e2e     # Main suite — chromium only, 65 tests (~1.4 min)
+npm run test:e2e     # Main suite — chromium only, 91 tests (~3.5 min)
 npm run test:visual  # Visual regression — chromium only, 5 snapshot tests
 npm test             # Jest unit tests — 87 tests
 ```
@@ -49,17 +49,24 @@ Never commit a config with browsers listed that aren't installed — every test 
 
 ## Timeout Rules
 
-The `/nzqa-maths` page fires 10+ parallel API requests on load. These rules prevent false timeout failures:
+The `/nzqa-maths` page fires 10+ parallel API requests on load. **Do NOT use `networkidle`** for
+`/nzqa-maths` tests — with 3 parallel workers all loading the page simultaneously (30+ concurrent
+requests), the server never reaches 500ms silence. Use structure-based waiting instead:
 
 | Situation | Rule |
 |---|---|
-| Any test that loads `/nzqa-maths` | `test.setTimeout(90000)` + `waitForLoadState('networkidle', { timeout: 75000 })` |
-| `beforeEach` loading `/nzqa-maths` with DeltaChart scroll | `waitForLoadState('networkidle', { timeout: 60000 })` |
+| Any test that loads `/nzqa-maths` | `test.setTimeout(90000)` + `waitForSelector('h1', { timeout: 20000 })` + `waitForTimeout(6000)` |
+| `beforeEach` loading `/nzqa-maths` with scroll | same as above, then scroll + `waitForTimeout(5000)` |
 | Test where clicking triggers new API fetches | `test.setTimeout(60000)` |
 | Visual snapshot tests | No networkidle needed — use `waitForTimeout(3000)` only |
-| Any page with >4 simultaneous fetches | Always override networkidle timeout |
+| Any page with >4 simultaneous fetches | Structure-based wait (h1 + timeout), not networkidle |
+| Checking "no console errors" on `/nzqa-maths` | Use response listener + filter `Failed to load resource` — see CLAUDE.md |
 
-**Why:** `waitForLoadState('networkidle')` requires 500ms of no network activity. With 10+ parallel fetches, this can take 45–60s on first cold load. The default 30s test timeout hits before idle is reached.
+**Why `networkidle` fails:** `waitForLoadState('networkidle')` requires 500ms of NO network activity.
+With 3 parallel workers each loading `/nzqa-maths` (10+ API requests), the combined 30+ requests
+keep the dev server permanently busy. Networkidle is never reached → test timeout.
+
+**Playwright config:** `workers: 3` locally (capped from unlimited to reduce parallel load on dev server).
 
 ---
 
@@ -156,7 +163,8 @@ When adding a new page:
 ## File Reference
 
 ```
-e2e/nzqa-maths.spec.ts       ← 36 tests, all phase 7 features
+e2e/nzqa-maths.spec.ts       ← 37 tests, all phase 7 features
+e2e/primary-maths.spec.ts    ← 26 tests, phase 8 primary school explorer
 e2e/creative-pages.spec.ts   ← 23 tests, creative pages + nav
 e2e/diagnostic.spec.ts       ← 5 tests, smoke + API health
 e2e/landing.spec.ts          ← 2 tests, home heading + title

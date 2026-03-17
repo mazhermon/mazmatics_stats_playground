@@ -6,7 +6,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 2 : 0,
-  workers: process.env['CI'] ? 1 : undefined,
+  workers: process.env['CI'] ? 1 : 3, // cap local workers to 3 — dev server gets flaky with 8+ parallel tests all loading /nzqa-maths
   reporter: 'html',
   use: {
     baseURL: 'http://localhost:3000',
