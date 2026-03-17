@@ -31,6 +31,12 @@ const navCards: NavCard[] = [
     tag: 'Excellence · Merit · L1–L3 · UE',
   },
   {
+    href: '/nzqa-literacy-numeracy',
+    title: 'NZ Literacy & Numeracy Explorer',
+    description: 'The floor is falling — 16 years of NCEA co-requisite attainment. Year 11 numeracy dropped from 86% to 56% since the 2020 reforms.',
+    tag: 'Literacy · Numeracy · 2009–2024',
+  },
+  {
     href: '/nzqa-creative',
     title: 'Creative Views',
     description: 'Bump chart, slope chart, and stream graph — rank shifts and trends across regions and ethnicities.',

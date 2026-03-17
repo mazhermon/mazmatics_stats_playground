@@ -1,64 +1,119 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDb, type LitNumRow } from '@/lib/db';
+import { getDb } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
+/**
+ * GET /api/nzqa/literacy-numeracy
+ *   ?area=numeracy            ← literacy | numeracy (default: numeracy)
+ *   &yearLevel=11             ← 11 | 12 | 13 (default: 11)
+ *   &groupBy=national         ← national | ethnicity | equity_index_group | gender | region
+ *   &yearFrom=2009
+ *   &yearTo=2024
+ *
+ * Returns co-requisite literacy/numeracy attainment data.
+ * current_attainment_rate  = passed for the first time this year
+ * cumulative_attainment_rate = have ever passed by this year level
+ *
+ * Note: equity_index_group has two formats in the data:
+ *   2009–2018: Decile 1-3 | Decile 4-7 | Decile 8-10
+ *   2019–2024: Fewer | Moderate | More
+ */
 export function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
 
+  const area = searchParams.get('area') ?? 'numeracy';
+  const yearLevelParam = searchParams.get('yearLevel') ?? '11';
+  const groupBy = searchParams.get('groupBy') ?? 'national';
   const yearFrom = searchParams.get('yearFrom');
   const yearTo = searchParams.get('yearTo');
-  const year = searchParams.get('year');
-  const area = searchParams.get('area');
-  const ethnicity = searchParams.get('ethnicity');
-  const gender = searchParams.get('gender');
-  const equityGroup = searchParams.get('equityGroup');
-  const region = searchParams.get('region');
 
-  const conditions: string[] = [];
-  const params: Record<string, string | number> = {};
-
-  if (year) {
-    conditions.push('year = @year');
-    params.year = parseInt(year, 10);
-  } else {
-    if (yearFrom) { conditions.push('year >= @yearFrom'); params.yearFrom = parseInt(yearFrom, 10); }
-    if (yearTo) { conditions.push('year <= @yearTo'); params.yearTo = parseInt(yearTo, 10); }
-  }
-  if (area) { conditions.push('area = @area'); params.area = area; }
-
-  if (ethnicity === 'null') {
-    conditions.push('ethnicity IS NULL');
-  } else if (ethnicity) {
-    conditions.push('ethnicity = @ethnicity'); params.ethnicity = ethnicity;
+  const allowedAreas = ['literacy', 'numeracy'];
+  if (!allowedAreas.includes(area)) {
+    return NextResponse.json({ error: 'Invalid area' }, { status: 400 });
   }
 
-  if (gender === 'null') {
-    conditions.push('gender IS NULL');
-  } else if (gender) {
-    conditions.push('gender = @gender'); params.gender = gender;
+  const yearLevel = parseInt(yearLevelParam, 10);
+  if (isNaN(yearLevel) || ![11, 12, 13].includes(yearLevel)) {
+    return NextResponse.json({ error: 'Invalid yearLevel — must be 11, 12, or 13' }, { status: 400 });
   }
 
-  if (equityGroup === 'null') {
-    conditions.push('equity_index_group IS NULL');
-  } else if (equityGroup) {
-    conditions.push('equity_index_group = @equityGroup'); params.equityGroup = equityGroup;
+  const allowedGroupBy = ['national', 'ethnicity', 'equity_index_group', 'gender', 'region'];
+  if (!allowedGroupBy.includes(groupBy)) {
+    return NextResponse.json({ error: 'Invalid groupBy' }, { status: 400 });
   }
 
-  if (region === 'null') {
-    conditions.push('region IS NULL');
-  } else if (region) {
-    conditions.push('region = @region'); params.region = region;
-  }
+  const conditions: string[] = ['area = @area', 'year_level = @yearLevel'];
+  const params: Record<string, string | number> = { area, yearLevel };
 
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-  const sql = `SELECT * FROM literacy_numeracy ${where} ORDER BY year, area`;
+  if (yearFrom) {
+    const yf = parseInt(yearFrom, 10);
+    if (isNaN(yf)) return NextResponse.json({ error: 'Invalid yearFrom' }, { status: 400 });
+    conditions.push('year >= @yearFrom');
+    params.yearFrom = yf;
+  }
+  if (yearTo) {
+    const yt = parseInt(yearTo, 10);
+    if (isNaN(yt)) return NextResponse.json({ error: 'Invalid yearTo' }, { status: 400 });
+    conditions.push('year <= @yearTo');
+    params.yearTo = yt;
+  }
 
   try {
     const db = getDb();
-    const rows = db.prepare(sql).all(params) as LitNumRow[];
-    return NextResponse.json({ data: rows, count: rows.length });
+    let rows: unknown[];
+
+    if (groupBy === 'national') {
+      const sql = `
+        SELECT year, area, year_level,
+               current_attainment_rate, cumulative_attainment_rate,
+               current_attainment, cumulative_attainment, total_count
+        FROM literacy_numeracy
+        WHERE ${conditions.join(' AND ')}
+          AND gender IS NULL AND ethnicity IS NULL AND equity_index_group IS NULL AND region IS NULL
+        ORDER BY year
+      `;
+      rows = db.prepare(sql).all(params);
+    } else {
+      const dimConditions = [...conditions];
+
+      if (groupBy === 'ethnicity') {
+        dimConditions.push('ethnicity IS NOT NULL');
+        dimConditions.push('gender IS NULL');
+        dimConditions.push('equity_index_group IS NULL');
+        dimConditions.push('region IS NULL');
+      } else if (groupBy === 'equity_index_group') {
+        dimConditions.push('equity_index_group IS NOT NULL');
+        dimConditions.push('gender IS NULL');
+        dimConditions.push('ethnicity IS NULL');
+        dimConditions.push('region IS NULL');
+      } else if (groupBy === 'gender') {
+        dimConditions.push('gender IS NOT NULL');
+        dimConditions.push('ethnicity IS NULL');
+        dimConditions.push('equity_index_group IS NULL');
+        dimConditions.push('region IS NULL');
+      } else if (groupBy === 'region') {
+        dimConditions.push('region IS NOT NULL');
+        dimConditions.push('gender IS NULL');
+        dimConditions.push('ethnicity IS NULL');
+        dimConditions.push('equity_index_group IS NULL');
+      }
+
+      // groupBy is allowlist-validated above — safe to interpolate as column name
+      const sql = `
+        SELECT year, ${groupBy} as group_label, area, year_level,
+               current_attainment_rate, cumulative_attainment_rate,
+               current_attainment, cumulative_attainment, total_count
+        FROM literacy_numeracy
+        WHERE ${dimConditions.join(' AND ')}
+        ORDER BY year, ${groupBy}
+      `;
+      rows = db.prepare(sql).all(params);
+    }
+
+    return NextResponse.json({ data: rows, area, yearLevel, groupBy });
   } catch (error) {
+    console.error('[/api/nzqa/literacy-numeracy]', error);
     return NextResponse.json({ error: 'Database error' }, { status: 500 });
   }
 }
