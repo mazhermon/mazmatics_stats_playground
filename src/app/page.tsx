@@ -25,6 +25,12 @@ const navCards: NavCard[] = [
     tag: 'Scholarship · Calculus · Statistics',
   },
   {
+    href: '/nzqa-endorsement',
+    title: 'NZ Endorsement Explorer',
+    description: 'Beyond the pass — who earns Excellence and Merit? NCEA qualification endorsement rates by ethnicity, equity, gender, and region.',
+    tag: 'Excellence · Merit · L1–L3 · UE',
+  },
+  {
     href: '/nzqa-creative',
     title: 'Creative Views',
     description: 'Bump chart, slope chart, and stream graph — rank shifts and trends across regions and ethnicities.',

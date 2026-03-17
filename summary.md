@@ -1,10 +1,37 @@
 # Session Summary
 
-## Current Project State (as of 2026-03-17, updated Phase 8)
+## Current Project State (as of 2026-03-18, updated Phase 10)
 
 ### What's been built — complete picture
 
-#### `/primary-maths` — Primary School Maths Feature (Phase 8 — NEW)
+#### `/nzqa-scholarship` — Scholarship Explorer (Phase 10 — NEW)
+
+| Chart | File | Notes |
+|---|---|---|
+| ScholarshipTrendChart | `src/components/charts/ScholarshipTrendChart.tsx` | D3 stacked area (national) + multi-line (ethnicity/gender); subject toggle; hover tooltip |
+| ScholarshipBreakdownChart | `src/components/charts/ScholarshipBreakdownChart.tsx` | Horizontal stacked bar — Outstanding/Scholarship/No Award; groupBy ethnicity/equity/gender/region; year selector |
+
+Page: `src/app/nzqa-scholarship/page.tsx` — hero + 2 chart sections + data notes
+Client wrapper: `src/app/nzqa-scholarship/NzqaScholarshipClient.tsx` — dynamic imports (ssr: false)
+
+**API route:** `GET /api/nzqa/scholarship?subject=Calculus|Statistics&groupBy=national|ethnicity|equity_index_group|region|gender&yearFrom=&yearTo=`
+- Returns `{ data, subject, groupBy }` — always returns outstanding_rate, scholarship_rate, no_award_rate, total_assessed
+- Equity data available 2019–2024 only
+- Allowlist-validated subject + groupBy; parameterised SQL
+
+**Data notes (scholarship-specific):**
+- `scholarship` table: 7678 rows, 38 subjects, 2015–2024
+- Maths subjects: `Calculus` (~1169–1345 assessed/yr) and `Statistics` (~739–980 assessed/yr)
+- Ethnicity column has `Maori` without macron (DB value) — display-side mapping in chart components
+- Equity `More` group has very small n in maths (6–19 students) — data unreliable, noted in UI
+- `outstanding_rate + scholarship_rate = award_rate` (both are passing awards)
+
+**Landing page:** `src/app/page.tsx` — scholarship nav card added (3rd card)
+**Tests:** `e2e/nzqa-scholarship.spec.ts` — 24 tests (API health × 9, page load × 5, chart controls × 10) — all passing
+
+---
+
+#### `/primary-maths` — Primary School Maths Feature (Phase 8)
 
 | Chart | File | Notes |
 |---|---|---|
@@ -35,7 +62,7 @@ GET /api/primary/curriculum-insights
 
 **Landing page:** `src/app/page.tsx` — primary-maths nav card added (first card)
 
-**Tests:** No e2e tests yet for /primary-maths (Phase 8 optional). tsc + lint clean. All APIs verified.
+**Tests:** 26 e2e tests (`e2e/primary-maths.spec.ts`). tsc + lint clean. All APIs verified.
 
 ---
 
@@ -109,11 +136,11 @@ Client wrapper: `src/app/nzqa-maths/NzqaMathsClient.tsx` — all chart dynamic i
 
 ### Test Coverage — COMPLETE
 
-**All tests green as of 2026-03-17.**
+**All tests green as of 2026-03-18.**
 
 ```
 npm test            → 87 unit tests passing
-npm run test:e2e    → 65 e2e tests passing (chromium, ~1.4 min)
+npm run test:e2e    → 116 e2e tests passing (chromium, ~4 min)
 npm run test:visual → 5 visual snapshot tests passing
 tsc --noEmit        → clean
 npm run lint        → clean
@@ -134,6 +161,8 @@ npm run lint        → clean
 |---|---|---|
 | `e2e/nzqa-maths.spec.ts` | 36 | All Phase 7 charts + API endpoints |
 | `e2e/creative-pages.spec.ts` | 23 | Creative pages + nav cards |
+| `e2e/primary-maths.spec.ts` | 26 | All Phase 8 charts + API endpoints |
+| `e2e/nzqa-scholarship.spec.ts` | 24 | Phase 10 scholarship API + page + chart controls |
 | `e2e/diagnostic.spec.ts` | 5 | Smoke: page load, API health, scroll screenshots |
 | `e2e/landing.spec.ts` | 2 | Home heading + title |
 | `e2e/visual/*.spec.ts` | 5 | Snapshot regression (visual config only) |
@@ -183,6 +212,16 @@ GET /api/nzqa/subjects
   → { data: SubjectRow[], count }
   ⚠️  param=null (string) → adds IS NULL to SQL
   ⚠️  DO NOT use subjects API for regional data — use timeline?groupBy=region
+
+GET /api/nzqa/scholarship
+  ?subject=Calculus          ← Calculus | Statistics (default: Calculus)
+  &groupBy=national          ← national | ethnicity | equity_index_group | region | gender
+  &yearFrom=2015 &yearTo=2024
+  → { data: [...], subject, groupBy }
+  national: { year, outstanding_rate, scholarship_rate, no_award_rate, total_assessed }
+  grouped:  { year, group_label, outstanding_rate, scholarship_rate, no_award_rate, total_assessed }
+  ⚠️  Equity data only 2019–2024. Scholarship table has 'Maori' without macron (display-side fix).
+  ⚠️  award_rate = outstanding_rate + scholarship_rate (computed client-side)
 ```
 
 ---
@@ -205,19 +244,16 @@ GET /api/nzqa/subjects
 
 ### What's Next (future sessions)
 
-**Phase 8 completions (optional):**
-- E2E tests for `/primary-maths` — 4 API endpoints + page load + 4 chart sections
+**Phase 10 remaining (Track B — more untapped tables):**
+- `/nzqa-endorsement` — `qualification_endorsement` table (Merit/Excellence for full NCEA qualifications)
+- `/nzqa-literacy` — `literacy_numeracy` table (co-attainment of literacy/numeracy co-requisite)
+
+**Phase 10 Track A (Phase 8 enrichment — optional):**
 - NMSSA 2013 + 2018 data — extract from S3 PDFs (pdftotext), seed into nmssa_maths table, add NMSSA trend chart (2013→2018→2022)
 - Curriculum Insights demographic breakdowns — Claude Desktop browser needed for ethnicity/gender % at each year level
-
-**Phase 9 / P5 — NZQA secondary untapped tables** (new pages/sections):
-- `scholarship` table — who gets NZ's highest academic award by ethnicity/equity/region
-- `qualification_endorsement` table — Merit/Excellence for full NCEA qualifications
-- `literacy_numeracy` table — co-attainment of literacy/numeracy co-requisite
 
 **P6 — Correlation ideas** (all feasible with single-dimension data):
 - Gender gap by level (does gap widen at L2/L3?)
 - Level progression (national pass rate thinning at L2/L3 over time)
 - Regional variance / most volatile regions post-2024 reform
 - Equity × level interaction
-- Scholarship by ethnicity (who attempts vs who succeeds)

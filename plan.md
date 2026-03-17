@@ -1,10 +1,18 @@
-# Current Work: Phase 10 — NZQA Secondary Untapped Tables + Phase 8 Data Enrichment
+# Current Work: Phase 11 — Remaining Untapped Tables
 
-**Goal:** Two parallel tracks of work:
-- **Track A (Phase 8 enrichment):** Add NMSSA trend (2013→2018→2022) and Curriculum Insights demographic breakdowns
-- **Track B (Phase 10 — new pages):** Build new pages/sections using already-seeded DB tables (`scholarship`, `qualification_endorsement`, `literacy_numeracy`)
+**Phase 10 COMPLETE (2026-03-18):** `/nzqa-scholarship` live, 116 e2e tests passing.
 
-## Track A — Phase 8 Enrichment
+**Goal:** Continue Track B — build pages for the two remaining untapped DB tables.
+
+## Track B — Remaining Pages
+
+| Page/Section | Data Source | Charts | Status |
+|---|---|---|---|
+| `/nzqa-scholarship` | `scholarship` table | ScholarshipTrendChart + ScholarshipBreakdownChart | ✅ DONE |
+| `/nzqa-endorsement` | `qualification_endorsement` table — already seeded | Merit/Excellence rates by group + trend | ❌ todo |
+| `/nzqa-literacy` | `literacy_numeracy` table — already seeded | Co-attainment rate by group + year-on-year | ❌ todo |
+
+## Track A — Phase 8 Enrichment (lower priority)
 
 | Item | Status |
 |------|--------|
@@ -12,19 +20,21 @@
 | Add NMSSA trend chart (2013→2018→2022) to `/primary-maths` | ❌ todo |
 | Demographic breakdowns for Curriculum Insights 2023–2024 (needs Claude Desktop browser) | ❌ todo |
 
-## Track B — Phase 10 New Secondary Pages
+## Phase 11 Completion Criteria
+- `/nzqa-endorsement` live with real DB data, API route, e2e tests
+- OR `/nzqa-literacy` live with real DB data, API route, e2e tests
+- `npm run test:e2e` passes with new tests included
 
-| Page/Section | Data Source | Charts | Status |
-|---|---|---|---|
-| `/nzqa-scholarship` | `scholarship` table — already seeded | ScholarshipTrendChart (stacked area + line), ScholarshipBreakdownChart (horizontal stacked bars) | ✅ DONE (2026-03-18) |
-| `/nzqa-endorsement` | `qualification_endorsement` table — already seeded | Merit/Excellence rates by group, trend | ❌ todo |
-| `/nzqa-literacy` | `literacy_numeracy` table — already seeded | Co-attainment rate by group, year-on-year | ❌ todo |
-
-## Phase 10 Completion Criteria
-- At least one new secondary page live with real DB data ✅
-- API route(s) for the new page ✅
-- Full e2e tests (API health + page load + chart renders) ✅
-- `npm run test:e2e` passes with new tests included ✅ (116 tests passing)
+## Before starting any new page — inspect the DB table first:
+```bash
+npx tsx -e "
+import Database from 'better-sqlite3';
+const db = new Database('src/data/nzqa.db');
+console.log(JSON.stringify(db.prepare('SELECT * FROM qualification_endorsement LIMIT 3').all(), null, 2));
+console.log(JSON.stringify(db.prepare('PRAGMA table_info(qualification_endorsement)').all(), null, 2));
+console.log(JSON.stringify(db.prepare('SELECT DISTINCT year FROM qualification_endorsement ORDER BY year').all(), null, 2));
+"
+```
 
 ---
 
