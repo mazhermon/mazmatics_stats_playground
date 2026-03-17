@@ -14,17 +14,17 @@
 
 ## Track B — Phase 10 New Secondary Pages
 
-| Page/Section | Data Source | Charts |
-|---|---|---|
-| `/nzqa-scholarship` | `scholarship` table — already seeded | Ethnicity rates, equity rates, regional rates, trend over time |
-| `/nzqa-endorsement` | `qualification_endorsement` table — already seeded | Merit/Excellence rates by group, trend |
-| `/nzqa-literacy` | `literacy_numeracy` table — already seeded | Co-attainment rate by group, year-on-year |
+| Page/Section | Data Source | Charts | Status |
+|---|---|---|---|
+| `/nzqa-scholarship` | `scholarship` table — already seeded | ScholarshipTrendChart (stacked area + line), ScholarshipBreakdownChart (horizontal stacked bars) | ✅ DONE (2026-03-18) |
+| `/nzqa-endorsement` | `qualification_endorsement` table — already seeded | Merit/Excellence rates by group, trend | ❌ todo |
+| `/nzqa-literacy` | `literacy_numeracy` table — already seeded | Co-attainment rate by group, year-on-year | ❌ todo |
 
 ## Phase 10 Completion Criteria
-- At least one new secondary page live with real DB data
-- API route(s) for the new page
-- Full e2e tests (API health + page load + chart renders)
-- `npm run test:e2e` passes with new tests included
+- At least one new secondary page live with real DB data ✅
+- API route(s) for the new page ✅
+- Full e2e tests (API health + page load + chart renders) ✅
+- `npm run test:e2e` passes with new tests included ✅ (116 tests passing)
 
 ---
 

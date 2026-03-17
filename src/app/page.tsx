@@ -19,6 +19,12 @@ const navCards: NavCard[] = [
     tag: 'Timeline · Map · 3D',
   },
   {
+    href: '/nzqa-scholarship',
+    title: 'NZ Scholarship Explorer',
+    description: 'Who earns NZ\'s top academic award? Calculus and Statistics Scholarship rates by ethnicity, equity, and region.',
+    tag: 'Scholarship · Calculus · Statistics',
+  },
+  {
     href: '/nzqa-creative',
     title: 'Creative Views',
     description: 'Bump chart, slope chart, and stream graph — rank shifts and trends across regions and ethnicities.',
