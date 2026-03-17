@@ -7,8 +7,14 @@ interface NavCard {
 
 const navCards: NavCard[] = [
   {
+    href: '/primary-maths',
+    title: 'NZ Primary Maths Explorer',
+    description: 'TIMSS international rankings, NMSSA equity gaps, and Curriculum Insights — Year 3 to Year 8.',
+    tag: 'TIMSS · NMSSA · Pipeline',
+  },
+  {
     href: '/nzqa-maths',
-    title: 'NZ Maths Achievement Explorer',
+    title: 'NZ Secondary Maths Explorer',
     description: 'Choropleth map, 3D landscape, equity gaps — a decade of NCEA maths data.',
     tag: 'Timeline · Map · 3D',
   },
