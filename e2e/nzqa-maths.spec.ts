@@ -56,10 +56,12 @@ test.describe('/nzqa-maths page', () => {
   });
 
   test('at least 5 SVG charts render after load', async ({ page }) => {
-    test.setTimeout(60000);
+    test.setTimeout(90000);
     await page.goto('/nzqa-maths');
     await page.waitForSelector('h1', { timeout: 20000 });
-    await page.waitForTimeout(6000);
+    // Wait for at least one SVG with rendered paths (data loaded + chart rendered)
+    await page.waitForSelector('svg path', { timeout: 30000 });
+    await page.waitForTimeout(8000); // let remaining above-fold charts settle
 
     const count = await page.locator('svg').count();
     // Only above-fold charts are rendered at load time (below-fold charts lazy-render on scroll)
@@ -167,13 +169,15 @@ test.describe('EquityGapVisualizer', () => {
 
 test.describe('RegionalMap', () => {
   test.beforeEach(async ({ page }) => {
-    test.setTimeout(90000);
+    test.setTimeout(120000);
     await page.goto('/nzqa-maths');
     // Use structure-based wait — networkidle is unreliable with parallel test load
     await page.waitForSelector('h1', { timeout: 20000 });
-    await page.waitForTimeout(6000); // let data fetches settle before scrolling
+    // Wait for above-fold chart data to load before scrolling (Supabase cold-start can be slow)
+    await page.waitForSelector('svg path', { timeout: 30000 });
     await page.locator('text=Where you live matters').first().scrollIntoViewIfNeeded();
-    await page.waitForTimeout(5000); // TopoJSON load + data fetch + D3 render
+    // Wait for region paths to appear — TopoJSON load + regional API fetch + D3 render
+    await page.waitForSelector('path.region', { timeout: 30000 });
   });
 
   test('map renders SVG region paths (was broken before Phase 7 fix)', async ({ page }) => {
@@ -310,6 +314,7 @@ test.describe('DeltaChart', () => {
 
 test.describe('API endpoints — Phase 7', () => {
   test('timeline groupBy=region returns regional data with group_label', async ({ request }) => {
+    test.setTimeout(90000);
     const res = await request.get(
       '/api/nzqa/timeline?metric=not_achieved_rate&groupBy=region&level=1&yearFrom=2024&yearTo=2024'
     );
@@ -321,6 +326,7 @@ test.describe('API endpoints — Phase 7', () => {
   });
 
   test('timeline metric=not_achieved_rate returns data (default metric for all new charts)', async ({ request }) => {
+    test.setTimeout(90000);
     const res = await request.get(
       '/api/nzqa/timeline?metric=not_achieved_rate&groupBy=national&level=1'
     );
@@ -331,6 +337,7 @@ test.describe('API endpoints — Phase 7', () => {
   });
 
   test('timeline metric=merit_rate returns data (used by GradeStackChart + merit_excellence)', async ({ request }) => {
+    test.setTimeout(90000);
     const res = await request.get(
       '/api/nzqa/timeline?metric=merit_rate&groupBy=national&level=1'
     );
@@ -340,6 +347,7 @@ test.describe('API endpoints — Phase 7', () => {
   });
 
   test('timeline metric=excellence_rate returns data (used by merit_excellence computation)', async ({ request }) => {
+    test.setTimeout(90000);
     const res = await request.get(
       '/api/nzqa/timeline?metric=excellence_rate&groupBy=national&level=1'
     );
@@ -349,6 +357,7 @@ test.describe('API endpoints — Phase 7', () => {
   });
 
   test('timeline groupBy=ethnicity returns group_label rows (used by TimelineExplorer ethnicity mode)', async ({ request }) => {
+    test.setTimeout(90000);
     const res = await request.get(
       '/api/nzqa/timeline?metric=not_achieved_rate&groupBy=ethnicity&level=1'
     );
@@ -361,6 +370,7 @@ test.describe('API endpoints — Phase 7', () => {
   });
 
   test('subjects API with specific region returns drilldown data', async ({ request }) => {
+    test.setTimeout(90000);
     const res = await request.get(
       '/api/nzqa/subjects?year=2024&region=Auckland&ethnicity=null&gender=null&equityGroup=null'
     );
@@ -374,6 +384,7 @@ test.describe('API endpoints — Phase 7', () => {
   });
 
   test('timeline yearFrom/yearTo filter works (used by TimelineExplorer year range)', async ({ request }) => {
+    test.setTimeout(90000);
     const res = await request.get(
       '/api/nzqa/timeline?metric=not_achieved_rate&groupBy=national&level=1&yearFrom=2020&yearTo=2022'
     );

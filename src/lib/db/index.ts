@@ -4,10 +4,18 @@ let sql: ReturnType<typeof postgres> | null = null;
 
 export function getDb() {
   if (!sql) {
-    if (!process.env.MZMS__POSTGRES_URL) {
-      throw new Error('MZMS__POSTGRES_URL environment variable is not set');
+    // Prefer direct connection (port 5432) over PgBouncer (port 6543).
+    // PgBouncer transaction mode can hang in local dev environments.
+    // Both are available when using the Supabase Vercel integration.
+    const connectionString =
+      process.env.MZMS__POSTGRES_URL_NON_POOLING ??
+      process.env.MZMS__POSTGRES_URL;
+    if (!connectionString) {
+      throw new Error(
+        'MZMS__POSTGRES_URL_NON_POOLING or MZMS__POSTGRES_URL environment variable is not set'
+      );
     }
-    sql = postgres(process.env.MZMS__POSTGRES_URL, {
+    sql = postgres(connectionString, {
       max: 5,
       idle_timeout: 20,
       connect_timeout: 10,
