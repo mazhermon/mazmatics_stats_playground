@@ -107,13 +107,27 @@
 
 **Note on dev server:** Pages `/nzqa-maths`, `/nzqa-scholarship`, `/primary-maths` require pre-warming on first access in dev mode — dev server takes ~20-30s to compile them. They return 500 instantly if the dev server is in a bad state. Fix: `pkill -f "next dev"`, restart dev server, curl all pages once before running tests.
 
+## Phase 15 — About Page ✅ COMPLETE (2026-03-18)
+
+- [x] Built `src/app/about/page.tsx` — Server Component, 6 sections
+- [x] Hero: gradient h1, subheading, graph-paper grid background, animated diagonal stripe SVG
+- [x] Stat cards: 3-column grid, `#BA90FF` left-border accent
+- [x] Book section: 2-column layout, offset colour-block shadow on placeholder, external link to mazmatics.com
+- [x] "Why this data site?" section — warm NZ English copy
+- [x] Data section: 2×2 source card grid + link to `/data-sources`
+- [x] Contact section: email/Instagram/Facebook with inline SVG icons
+- [x] "About Mazmatics" nav card added to home page `navCards` array
+- [x] Pre-existing TS error in `nmssa.test.ts` fixed (double-cast via `unknown`)
+- [x] `e2e/about.spec.ts` — 14 tests, all passing
+- [x] Full test suite: 204/204 e2e, 175/175 unit — all green
+
 ## Ready for next session
 
 See `plan.md` and `summary.md` for full context.
 
 **Suggested next focus:**
 
-**A) Phase 15 — Next feature page** — Check `visualisations.md` for ideas or continue with remaining NZQA tables (if any untapped)
+**A) Phase 16 — Next feature page** — `/nzqa-endorsement` or `/nzqa-literacy` (remaining NZQA tables)
 
 **B) Visual regression** — Add `/primary-maths` NMSSATrendChart visual snapshot
 

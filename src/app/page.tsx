@@ -56,6 +56,12 @@ const navCards: NavCard[] = [
     description: 'Ridgeline plot, horizon chart, and bubble comparison — density, deviation, and population.',
     tag: 'Ridgeline · Horizon · Bubbles',
   },
+  {
+    href: '/about',
+    title: 'About Mazmatics',
+    description: 'Who built this, why it exists, and where the data comes from.',
+    tag: 'About · Story · Data',
+  },
 ];
 
 export default function Home() {

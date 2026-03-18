@@ -128,25 +128,25 @@ describe('GET /api/primary/nmssa', () => {
   describe('SQL generation', () => {
     it('yearLevel param → adds year_level condition', async () => {
       await GET(makeRequest({ yearLevel: '4' }));
-      const sql = (mockPrepare.mock.calls[0] as [string])[0];
+      const sql = (mockPrepare.mock.calls[0] as unknown as [string])[0];
       expect(sql).toContain('year_level = @year_level');
     });
 
     it('groupType param → adds group_type condition', async () => {
       await GET(makeRequest({ groupType: 'ethnicity' }));
-      const sql = (mockPrepare.mock.calls[0] as [string])[0];
+      const sql = (mockPrepare.mock.calls[0] as unknown as [string])[0];
       expect(sql).toContain('group_type = @group_type');
     });
 
     it('no params → no WHERE clause added (returns all)', async () => {
       await GET(makeRequest({}));
-      const sql = (mockPrepare.mock.calls[0] as [string])[0];
+      const sql = (mockPrepare.mock.calls[0] as unknown as [string])[0];
       expect(sql).not.toContain('WHERE');
     });
 
     it('selects year column for multi-year ordering', async () => {
       await GET(makeRequest({}));
-      const sql = (mockPrepare.mock.calls[0] as [string])[0];
+      const sql = (mockPrepare.mock.calls[0] as unknown as [string])[0];
       expect(sql).toContain('year');
     });
   });

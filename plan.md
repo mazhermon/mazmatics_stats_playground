@@ -1,6 +1,15 @@
-# Current Status: Phase 14 COMPLETE — Ready for Phase 15
+# Current Status: Phase 15 COMPLETE — Ready for Phase 16
 
-**Phase 14 COMPLETE (2026-03-18):** `/data-sources` page live. All "About this data" links added. 190/190 e2e + 175/175 unit tests passing.
+**Phase 15 COMPLETE (2026-03-18):** `/about` page live. 204/204 e2e + 175/175 unit tests passing.
+
+## What was just built (Phase 15)
+
+- `src/app/about/page.tsx` — Server Component, 6 sections, full Mazmatics brand treatment
+- Graph-paper grid hero background, animated diagonal stripe SVG decoration
+- Offset colour-block shadow on book card, gradient headings, `#BA90FF` stat card accents
+- "About Mazmatics" nav card added to home page
+- `e2e/about.spec.ts` — 14 e2e tests, all passing
+- Pre-existing TS error in `nmssa.test.ts` fixed (double-cast via `unknown`)
 
 ## What was just built (Phase 14)
 

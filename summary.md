@@ -1,8 +1,33 @@
 # Session Summary
 
-## Current Project State (as of 2026-03-18, updated Phase 14)
+## Current Project State (as of 2026-03-18, updated Phase 15)
 
-### `/data-sources` — Data Sources & Methodology Page (Phase 14 — NEW)
+### `/about` — About Page (Phase 15 — NEW)
+
+**Route:** `src/app/about/page.tsx` — Server Component, fully static, no client JS
+**Purpose:** Introduces Maz, the Mazmatics book, and the purpose of this data site. Bridges the playful kids-book brand with the adult-focused data journalism aesthetic.
+
+**Sections:**
+1. **Hero** — gradient h1, subheading, graph-paper grid background texture, animated diagonal stripe SVG decoration (CSS keyframe, respects `prefers-reduced-motion`)
+2. **Stat cards** — 3-column grid: Wellington NZ / Two kids / Web developer; `#BA90FF` left-border accent
+3. **Where it all started** — book description, 2-column layout with offset colour-block shadow placeholder, external link to `mazmatics.com/get-the-book`
+4. **From a story book to a data story** — why this site exists, honest and warm NZ English
+5. **The data behind the charts** — 2×2 source card grid (NZQA, TIMSS, NMSSA, Curriculum Insights), link to `/data-sources`
+6. **Get in touch** — email/Instagram/Facebook with inline SVG icons
+
+**Brand elements applied:**
+- Gradient text (`linear-gradient(to left, #BA90FF, #47A5F1)`) on all headings
+- Offset colour-block shadow (`#BA90FF 12px 12px, #47A5F1 -12px -12px`) on book card
+- Graph-paper grid background (faint purple lines, 32px × 32px) in hero
+- Animated diagonal stripe SVG decorations
+
+**Home page:** "About Mazmatics" nav card added to `navCards` array
+**Tests:** `e2e/about.spec.ts` — 14 tests, all passing
+**Final test count: 204/204 e2e, 175/175 unit — all green**
+
+---
+
+### `/data-sources` — Data Sources & Methodology Page (Phase 14)
 
 **Route:** `src/app/data-sources/page.tsx` — Server Component, fully static, no client JS
 **Purpose:** Documents all 4 data sources used across the app with deep-link anchors, publisher metadata, caveats, and external links.
