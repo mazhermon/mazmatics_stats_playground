@@ -4,10 +4,9 @@
 import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/nzqa/literacy-numeracy/route';
 
-const mockAll = jest.fn();
-const mockPrepare = jest.fn(() => ({ all: mockAll }));
+const mockUnsafe = jest.fn().mockResolvedValue([]);
 jest.mock('@/lib/db', () => ({
-  getDb: jest.fn(() => ({ prepare: mockPrepare })),
+  getDb: jest.fn(() => ({ unsafe: mockUnsafe })),
 }));
 
 function makeRequest(params: Record<string, string>): NextRequest {
@@ -17,13 +16,18 @@ function makeRequest(params: Record<string, string>): NextRequest {
 }
 
 function capturedSql(): string {
-  const call = mockPrepare.mock.calls[0] as unknown as [string] | undefined;
+  const call = mockUnsafe.mock.calls[0] as [string, unknown[]] | undefined;
   return call?.[0] ?? '';
+}
+
+function capturedParams(): unknown[] {
+  const call = mockUnsafe.mock.calls[0] as [string, unknown[]] | undefined;
+  return call?.[1] ?? [];
 }
 
 describe('GET /api/nzqa/literacy-numeracy', () => {
   beforeEach(() => {
-    mockAll.mockReturnValue([]);
+    mockUnsafe.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -110,8 +114,8 @@ describe('GET /api/nzqa/literacy-numeracy', () => {
     it('includes area and year_level conditions', async () => {
       await GET(makeRequest({ area: 'numeracy', yearLevel: '11', groupBy: 'national' }));
       const sql = capturedSql();
-      expect(sql).toContain('area = @area');
-      expect(sql).toContain('year_level = @yearLevel');
+      expect(sql).toMatch(/area = \$\d+/);
+      expect(sql).toMatch(/year_level = \$\d+/);
     });
 
     it('excludes all dimension columns (all IS NULL)', async () => {
@@ -176,30 +180,28 @@ describe('GET /api/nzqa/literacy-numeracy', () => {
   });
 
   describe('yearFrom/yearTo in SQL', () => {
-    it('yearFrom → adds year >= condition', async () => {
+    it('yearFrom → adds year >= $N condition', async () => {
       await GET(makeRequest({ yearFrom: '2009' }));
       const sql = capturedSql();
-      expect(sql).toContain('year >= @yearFrom');
+      expect(sql).toMatch(/year >= \$\d+/);
     });
 
-    it('yearTo → adds year <= condition', async () => {
+    it('yearTo → adds year <= $N condition', async () => {
       await GET(makeRequest({ yearTo: '2024' }));
       const sql = capturedSql();
-      expect(sql).toContain('year <= @yearTo');
+      expect(sql).toMatch(/year <= \$\d+/);
     });
   });
 
   describe('yearLevel is passed to query params', () => {
     it('yearLevel=11 is passed as numeric 11', async () => {
       await GET(makeRequest({ yearLevel: '11' }));
-      const callArgs = mockAll.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-      expect(callArgs?.yearLevel).toBe(11);
+      expect(capturedParams()).toContain(11);
     });
 
     it('yearLevel=13 is passed as numeric 13', async () => {
       await GET(makeRequest({ yearLevel: '13' }));
-      const callArgs = mockAll.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-      expect(callArgs?.yearLevel).toBe(13);
+      expect(capturedParams()).toContain(13);
     });
   });
 
@@ -211,7 +213,7 @@ describe('GET /api/nzqa/literacy-numeracy', () => {
         { year: 2024, area: 'numeracy', year_level: 11, current_attainment_rate: 0.559, cumulative_attainment_rate: 0.748, total_count: 70141 },
         { year: 2023, area: 'numeracy', year_level: 11, current_attainment_rate: 0.62, cumulative_attainment_rate: 0.78, total_count: 69000 },
       ];
-      mockAll.mockReturnValue(mockRows);
+      mockUnsafe.mockResolvedValue(mockRows);
 
       const res = await GET(makeRequest({ area: 'numeracy', yearLevel: '11', groupBy: 'national' }));
       expect(res.status).toBe(200);
@@ -229,7 +231,7 @@ describe('GET /api/nzqa/literacy-numeracy', () => {
         { year: 2024, group_label: 'Asian', current_attainment_rate: 0.72, cumulative_attainment_rate: 0.85 },
         { year: 2024, group_label: 'Maori', current_attainment_rate: 0.41, cumulative_attainment_rate: 0.63 },
       ];
-      mockAll.mockReturnValue(mockRows);
+      mockUnsafe.mockResolvedValue(mockRows);
 
       const res = await GET(makeRequest({ area: 'numeracy', yearLevel: '11', groupBy: 'ethnicity', yearFrom: '2024', yearTo: '2024' }));
       expect(res.status).toBe(200);
@@ -264,7 +266,7 @@ describe('GET /api/nzqa/literacy-numeracy', () => {
 
   describe('DB failure', () => {
     it('DB throws → 500 with error message', async () => {
-      mockAll.mockImplementation(() => { throw new Error('DB exploded'); });
+      mockUnsafe.mockRejectedValue(new Error('DB exploded'));
       const res = await GET(makeRequest({ area: 'numeracy', yearLevel: '11' }));
       expect(res.status).toBe(500);
       const body = await res.json();

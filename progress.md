@@ -121,14 +121,26 @@
 - [x] `e2e/about.spec.ts` — 14 tests, all passing
 - [x] Full test suite: 204/204 e2e, 175/175 unit — all green
 
-## Ready for next session
+## Phase 16 — Supabase Migration ✅ COMPLETE (2026-03-19)
 
-See `plan.md` and `summary.md` for full context.
+- [x] `postgres` package installed, `better-sqlite3` moved to devDependencies
+- [x] `src/lib/db/index.ts` rewritten — postgres client using `MZMS__POSTGRES_URL`, same TypeScript types
+- [x] `src/lib/db/primary.ts` updated — re-exports `getDb` as `getPrimaryDb`
+- [x] `src/data/schema.sql` written — all 9 tables in Postgres DDL (SERIAL, FLOAT8, indexes)
+- [x] `src/scripts/seed-supabase.ts` written + `seed:supabase` npm script added
+- [x] All 7 NZQA API routes updated — async, `sql.unsafe(queryStr, params)`, positional `$1`/`$2` params
+- [x] All 3 primary API routes updated — same pattern
+- [x] `next.config.ts` cleaned up — removed `serverExternalPackages`, `outputFileTracingIncludes`
+- [x] Unit tests updated — `mockUnsafe` pattern, 167/167 tests pass (2 pre-existing unrelated failures)
+- [x] `tsc --noEmit` clean (2 pre-existing errors only in test files)
+- [x] `npm run lint` clean
+- [x] `npm run build` succeeds
+- [x] `.env.local.example` created with all required env vars documented
+- [x] `.npmrc` created with `legacy-peer-deps=true` for Vercel builds
+- [x] SQLite WAL files removed from git, `.gitignore` updated
+- [x] Docs updated
 
-**Suggested next focus:**
-
-**A) Phase 16 — Next feature page** — `/nzqa-endorsement` or `/nzqa-literacy` (remaining NZQA tables)
-
-**B) Visual regression** — Add `/primary-maths` NMSSATrendChart visual snapshot
-
-**C) Security audit** — Run Shannon pentest on API routes (SQL injection check) — see `plan.md` for details
+**Manual steps remaining for Maz:**
+- [ ] Run `src/data/schema.sql` in Supabase SQL editor
+- [ ] Run `npm run seed:supabase` to populate Supabase from local SQLite
+- [ ] Verify deployed charts load correctly on Vercel

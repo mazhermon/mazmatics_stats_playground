@@ -4,10 +4,9 @@
 import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/nzqa/endorsement/route';
 
-const mockAll = jest.fn();
-const mockPrepare = jest.fn(() => ({ all: mockAll }));
+const mockUnsafe = jest.fn().mockResolvedValue([]);
 jest.mock('@/lib/db', () => ({
-  getDb: jest.fn(() => ({ prepare: mockPrepare })),
+  getDb: jest.fn(() => ({ unsafe: mockUnsafe })),
 }));
 
 function makeRequest(params: Record<string, string>): NextRequest {
@@ -17,13 +16,18 @@ function makeRequest(params: Record<string, string>): NextRequest {
 }
 
 function capturedSql(): string {
-  const call = mockPrepare.mock.calls[0] as unknown as [string] | undefined;
+  const call = mockUnsafe.mock.calls[0] as [string, unknown[]] | undefined;
   return call?.[0] ?? '';
+}
+
+function capturedParams(): unknown[] {
+  const call = mockUnsafe.mock.calls[0] as [string, unknown[]] | undefined;
+  return call?.[1] ?? [];
 }
 
 describe('GET /api/nzqa/endorsement', () => {
   beforeEach(() => {
-    mockAll.mockReturnValue([]);
+    mockUnsafe.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -89,8 +93,8 @@ describe('GET /api/nzqa/endorsement', () => {
     it('uses qualification and year_level conditions', async () => {
       await GET(makeRequest({ qualification: 'NCEA Level 3', groupBy: 'national' }));
       const sql = capturedSql();
-      expect(sql).toContain('qualification = @qualification');
-      expect(sql).toContain('year_level = @yearLevel');
+      expect(sql).toMatch(/qualification = \$\d+/);
+      expect(sql).toMatch(/year_level = \$\d+/);
     });
 
     it('excludes all dimension columns (all IS NULL)', async () => {
@@ -156,42 +160,38 @@ describe('GET /api/nzqa/endorsement', () => {
   });
 
   describe('yearFrom/yearTo in SQL', () => {
-    it('yearFrom → adds year >= condition', async () => {
+    it('yearFrom → adds year >= $N condition', async () => {
       await GET(makeRequest({ yearFrom: '2020' }));
       const sql = capturedSql();
-      expect(sql).toContain('year >= @yearFrom');
+      expect(sql).toMatch(/year >= \$\d+/);
     });
 
-    it('yearTo → adds year <= condition', async () => {
+    it('yearTo → adds year <= $N condition', async () => {
       await GET(makeRequest({ yearTo: '2022' }));
       const sql = capturedSql();
-      expect(sql).toContain('year <= @yearTo');
+      expect(sql).toMatch(/year <= \$\d+/);
     });
   });
 
   describe('primary year_level mapping', () => {
     it('NCEA Level 1 uses year_level 11', async () => {
       await GET(makeRequest({ qualification: 'NCEA Level 1' }));
-      const callArgs = mockAll.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-      expect(callArgs?.yearLevel).toBe(11);
+      expect(capturedParams()).toContain(11);
     });
 
     it('NCEA Level 2 uses year_level 12', async () => {
       await GET(makeRequest({ qualification: 'NCEA Level 2' }));
-      const callArgs = mockAll.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-      expect(callArgs?.yearLevel).toBe(12);
+      expect(capturedParams()).toContain(12);
     });
 
     it('NCEA Level 3 uses year_level 13', async () => {
       await GET(makeRequest({ qualification: 'NCEA Level 3' }));
-      const callArgs = mockAll.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-      expect(callArgs?.yearLevel).toBe(13);
+      expect(capturedParams()).toContain(13);
     });
 
     it('University Entrance uses year_level 13', async () => {
       await GET(makeRequest({ qualification: 'University Entrance' }));
-      const callArgs = mockAll.mock.calls[0]?.[0] as Record<string, unknown> | undefined;
-      expect(callArgs?.yearLevel).toBe(13);
+      expect(capturedParams()).toContain(13);
     });
   });
 
@@ -203,7 +203,7 @@ describe('GET /api/nzqa/endorsement', () => {
         { year: 2024, excellence_rate: 0.15, merit_rate: 0.32, no_endorsement_rate: 0.53, total_attainment: 33000 },
         { year: 2023, excellence_rate: 0.14, merit_rate: 0.31, no_endorsement_rate: 0.55, total_attainment: 32000 },
       ];
-      mockAll.mockReturnValue(mockRows);
+      mockUnsafe.mockResolvedValue(mockRows);
 
       const res = await GET(makeRequest({ qualification: 'NCEA Level 3', groupBy: 'national' }));
       expect(res.status).toBe(200);
@@ -220,7 +220,7 @@ describe('GET /api/nzqa/endorsement', () => {
         { year: 2024, group_label: 'Asian', excellence_rate: 0.22, merit_rate: 0.35, no_endorsement_rate: 0.43 },
         { year: 2024, group_label: 'Maori', excellence_rate: 0.08, merit_rate: 0.20, no_endorsement_rate: 0.72 },
       ];
-      mockAll.mockReturnValue(mockRows);
+      mockUnsafe.mockResolvedValue(mockRows);
 
       const res = await GET(makeRequest({ groupBy: 'ethnicity', yearFrom: '2024', yearTo: '2024' }));
       expect(res.status).toBe(200);
@@ -248,7 +248,7 @@ describe('GET /api/nzqa/endorsement', () => {
 
   describe('DB failure', () => {
     it('DB throws → 500 with error message', async () => {
-      mockAll.mockImplementation(() => { throw new Error('DB exploded'); });
+      mockUnsafe.mockRejectedValue(new Error('DB exploded'));
       const res = await GET(makeRequest({ qualification: 'NCEA Level 3' }));
       expect(res.status).toBe(500);
       const body = await res.json();

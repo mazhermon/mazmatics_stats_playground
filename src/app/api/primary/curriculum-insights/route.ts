@@ -9,15 +9,15 @@ export const dynamic = 'force-dynamic';
  * Returns all Curriculum Insights % meeting provisional benchmarks (2023–2024)
  * for all year levels.
  */
-export function GET() {
+export async function GET() {
   try {
-    const db = getPrimaryDb();
-    const rows = db.prepare(`
+    const sql = getPrimaryDb();
+    const rows = await sql.unsafe(`
       SELECT id, year, year_level, group_type, group_value,
              pct_meeting, pct_less_1yr, pct_more_1yr
       FROM curriculum_insights_maths
       ORDER BY year, year_level
-    `).all();
+    `);
     return NextResponse.json({ data: rows });
   } catch (error) {
     console.error('[/api/primary/curriculum-insights]', error);

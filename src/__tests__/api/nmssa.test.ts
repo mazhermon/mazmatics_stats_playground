@@ -4,10 +4,9 @@
 import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/primary/nmssa/route';
 
-const mockAll = jest.fn();
-const mockPrepare = jest.fn(() => ({ all: mockAll }));
+const mockUnsafe = jest.fn().mockResolvedValue([]);
 jest.mock('@/lib/db/primary', () => ({
-  getPrimaryDb: jest.fn(() => ({ prepare: mockPrepare })),
+  getPrimaryDb: jest.fn(() => ({ unsafe: mockUnsafe })),
 }));
 
 function makeRequest(params: Record<string, string>): NextRequest {
@@ -32,7 +31,7 @@ const sampleRow = {
 
 describe('GET /api/primary/nmssa', () => {
   beforeEach(() => {
-    mockAll.mockReturnValue([sampleRow]);
+    mockUnsafe.mockResolvedValue([sampleRow]);
   });
 
   afterEach(() => {
@@ -96,7 +95,7 @@ describe('GET /api/primary/nmssa', () => {
         { ...sampleRow, year: 2018 },
         { ...sampleRow, year: 2022 },
       ];
-      mockAll.mockReturnValue(rows);
+      mockUnsafe.mockResolvedValue(rows);
 
       const res = await GET(makeRequest({}));
       expect(res.status).toBe(200);
@@ -128,25 +127,29 @@ describe('GET /api/primary/nmssa', () => {
   describe('SQL generation', () => {
     it('yearLevel param → adds year_level condition', async () => {
       await GET(makeRequest({ yearLevel: '4' }));
-      const sql = (mockPrepare.mock.calls[0] as unknown as [string])[0];
-      expect(sql).toContain('year_level = @year_level');
+      const call = mockUnsafe.mock.calls[0] as [string, unknown[]] | undefined;
+      const sql = call?.[0] ?? '';
+      expect(sql).toMatch(/year_level = \$\d+/);
     });
 
     it('groupType param → adds group_type condition', async () => {
       await GET(makeRequest({ groupType: 'ethnicity' }));
-      const sql = (mockPrepare.mock.calls[0] as unknown as [string])[0];
-      expect(sql).toContain('group_type = @group_type');
+      const call = mockUnsafe.mock.calls[0] as [string, unknown[]] | undefined;
+      const sql = call?.[0] ?? '';
+      expect(sql).toMatch(/group_type = \$\d+/);
     });
 
     it('no params → no WHERE clause added (returns all)', async () => {
       await GET(makeRequest({}));
-      const sql = (mockPrepare.mock.calls[0] as unknown as [string])[0];
+      const call = mockUnsafe.mock.calls[0] as [string, unknown[]] | undefined;
+      const sql = call?.[0] ?? '';
       expect(sql).not.toContain('WHERE');
     });
 
     it('selects year column for multi-year ordering', async () => {
       await GET(makeRequest({}));
-      const sql = (mockPrepare.mock.calls[0] as unknown as [string])[0];
+      const call = mockUnsafe.mock.calls[0] as [string, unknown[]] | undefined;
+      const sql = call?.[0] ?? '';
       expect(sql).toContain('year');
     });
   });
@@ -179,7 +182,7 @@ describe('GET /api/primary/nmssa', () => {
 
   describe('DB failure', () => {
     it('DB throws → 500 with error message', async () => {
-      mockAll.mockImplementation(() => { throw new Error('DB exploded'); });
+      mockUnsafe.mockRejectedValue(new Error('DB exploded'));
       const res = await GET(makeRequest({}));
       expect(res.status).toBe(500);
       const body = await res.json();

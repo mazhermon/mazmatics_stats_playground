@@ -4,11 +4,9 @@
 import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/nzqa/timeline/route';
 
-// Mock the DB module
-const mockAll = jest.fn();
-const mockPrepare = jest.fn(() => ({ all: mockAll }));
+const mockUnsafe = jest.fn().mockResolvedValue([]);
 jest.mock('@/lib/db', () => ({
-  getDb: jest.fn(() => ({ prepare: mockPrepare })),
+  getDb: jest.fn(() => ({ unsafe: mockUnsafe })),
 }));
 
 function makeRequest(params: Record<string, string>): NextRequest {
@@ -19,7 +17,7 @@ function makeRequest(params: Record<string, string>): NextRequest {
 
 describe('GET /api/nzqa/timeline', () => {
   beforeEach(() => {
-    mockAll.mockReturnValue([]);
+    mockUnsafe.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -54,7 +52,7 @@ describe('GET /api/nzqa/timeline', () => {
     });
   });
 
-  describe('level validation (after fix)', () => {
+  describe('level validation', () => {
     it('non-numeric level → 400', async () => {
       const res = await GET(makeRequest({ level: 'abc' }));
       expect(res.status).toBe(400);
@@ -68,7 +66,7 @@ describe('GET /api/nzqa/timeline', () => {
     });
   });
 
-  describe('yearFrom/yearTo validation (after fix)', () => {
+  describe('yearFrom/yearTo validation', () => {
     it('non-numeric yearFrom → 400', async () => {
       const res = await GET(makeRequest({ yearFrom: 'nope' }));
       expect(res.status).toBe(400);
@@ -82,7 +80,7 @@ describe('GET /api/nzqa/timeline', () => {
 
   describe('happy path', () => {
     it('valid params with empty DB result → 200 with data shape', async () => {
-      mockAll.mockReturnValue([]);
+      mockUnsafe.mockResolvedValue([]);
       const res = await GET(makeRequest({ metric: 'achieved_rate', groupBy: 'national' }));
       expect(res.status).toBe(200);
       const body = await res.json();
@@ -92,7 +90,7 @@ describe('GET /api/nzqa/timeline', () => {
 
   describe('DB failure', () => {
     it('DB throws → 500', async () => {
-      mockAll.mockImplementation(() => { throw new Error('DB exploded'); });
+      mockUnsafe.mockRejectedValue(new Error('DB exploded'));
       const res = await GET(makeRequest({ metric: 'achieved_rate' }));
       expect(res.status).toBe(500);
       const body = await res.json();

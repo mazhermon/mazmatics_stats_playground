@@ -4,11 +4,9 @@
 import { NextRequest } from 'next/server';
 import { GET } from '@/app/api/nzqa/subjects/route';
 
-// Mock the DB module (same pattern as timeline.test.ts)
-const mockAll = jest.fn();
-const mockPrepare = jest.fn(() => ({ all: mockAll }));
+const mockUnsafe = jest.fn().mockResolvedValue([]);
 jest.mock('@/lib/db', () => ({
-  getDb: jest.fn(() => ({ prepare: mockPrepare })),
+  getDb: jest.fn(() => ({ unsafe: mockUnsafe })),
 }));
 
 function makeRequest(params: Record<string, string>): NextRequest {
@@ -17,15 +15,14 @@ function makeRequest(params: Record<string, string>): NextRequest {
   return new NextRequest(url.toString());
 }
 
-// Helper to capture the SQL passed to prepare()
 function capturedSql(): string {
-  const call = mockPrepare.mock.calls[0] as unknown as [string] | undefined;
+  const call = mockUnsafe.mock.calls[0] as [string, unknown[]] | undefined;
   return call?.[0] ?? '';
 }
 
 describe('GET /api/nzqa/subjects', () => {
   beforeEach(() => {
-    mockAll.mockReturnValue([]);
+    mockUnsafe.mockResolvedValue([]);
   });
 
   afterEach(() => {
@@ -48,32 +45,32 @@ describe('GET /api/nzqa/subjects', () => {
   });
 
   describe('year param', () => {
-    it('year param → adds year = @year to SQL', async () => {
+    it('year param → adds year = $N to SQL', async () => {
       await GET(makeRequest({ year: '2024' }));
       const sql = capturedSql();
-      expect(sql).toContain('year = @year');
+      expect(sql).toMatch(/year = \$\d+/);
     });
 
     it('yearFrom + yearTo → adds range conditions', async () => {
       await GET(makeRequest({ yearFrom: '2019', yearTo: '2024' }));
       const sql = capturedSql();
-      expect(sql).toContain('year >= @yearFrom');
-      expect(sql).toContain('year <= @yearTo');
+      expect(sql).toMatch(/year >= \$\d+/);
+      expect(sql).toMatch(/year <= \$\d+/);
     });
 
     it('year param takes precedence over yearFrom/yearTo', async () => {
       await GET(makeRequest({ year: '2024', yearFrom: '2019', yearTo: '2023' }));
       const sql = capturedSql();
-      expect(sql).toContain('year = @year');
-      expect(sql).not.toContain('year >= @yearFrom');
+      expect(sql).toMatch(/year = \$\d+/);
+      expect(sql).not.toMatch(/year >= \$/);
     });
   });
 
   describe('dimension params', () => {
-    it('region="Auckland" → adds region = @region (not IS NULL)', async () => {
+    it('region="Auckland" → adds region = $N (not IS NULL)', async () => {
       await GET(makeRequest({ region: 'Auckland' }));
       const sql = capturedSql();
-      expect(sql).toContain('region = @region');
+      expect(sql).toMatch(/region = \$\d+/);
       expect(sql).not.toContain('region IS NULL');
     });
 
@@ -81,7 +78,7 @@ describe('GET /api/nzqa/subjects', () => {
       await GET(makeRequest({ region: 'null' }));
       const sql = capturedSql();
       expect(sql).toContain('region IS NULL');
-      expect(sql).not.toContain('region = @region');
+      expect(sql).not.toMatch(/region = \$/);
     });
 
     it('ethnicity="null" (string) → adds ethnicity IS NULL', async () => {
@@ -90,10 +87,10 @@ describe('GET /api/nzqa/subjects', () => {
       expect(sql).toContain('ethnicity IS NULL');
     });
 
-    it('ethnicity="Māori" → adds ethnicity = @ethnicity', async () => {
+    it('ethnicity="Māori" → adds ethnicity = $N', async () => {
       await GET(makeRequest({ ethnicity: 'Māori' }));
       const sql = capturedSql();
-      expect(sql).toContain('ethnicity = @ethnicity');
+      expect(sql).toMatch(/ethnicity = \$\d+/);
     });
 
     it('gender="null" → adds gender IS NULL', async () => {
@@ -108,10 +105,10 @@ describe('GET /api/nzqa/subjects', () => {
       expect(sql).toContain('equity_index_group IS NULL');
     });
 
-    it('level param → adds level = @level', async () => {
+    it('level param → adds level = $N', async () => {
       await GET(makeRequest({ level: '1' }));
       const sql = capturedSql();
-      expect(sql).toContain('level = @level');
+      expect(sql).toMatch(/level = \$\d+/);
     });
   });
 
@@ -125,8 +122,8 @@ describe('GET /api/nzqa/subjects', () => {
         equityGroup: 'null',
       }));
       const sql = capturedSql();
-      expect(sql).toContain('year = @year');
-      expect(sql).toContain('region = @region');
+      expect(sql).toMatch(/year = \$\d+/);
+      expect(sql).toMatch(/region = \$\d+/);
       expect(sql).toContain('ethnicity IS NULL');
       expect(sql).toContain('gender IS NULL');
       expect(sql).toContain('equity_index_group IS NULL');
@@ -139,7 +136,7 @@ describe('GET /api/nzqa/subjects', () => {
         { year: 2024, level: 1, subject: 'Mathematics', achieved_rate: 0.6, region: 'Auckland' },
         { year: 2024, level: 2, subject: 'Mathematics', achieved_rate: 0.55, region: 'Auckland' },
       ];
-      mockAll.mockReturnValue(mockRows);
+      mockUnsafe.mockResolvedValue(mockRows);
 
       const res = await GET(makeRequest({ year: '2024', region: 'Auckland' }));
       expect(res.status).toBe(200);
@@ -152,7 +149,7 @@ describe('GET /api/nzqa/subjects', () => {
 
   describe('DB failure', () => {
     it('DB throws → 500 with error message', async () => {
-      mockAll.mockImplementation(() => { throw new Error('DB exploded'); });
+      mockUnsafe.mockRejectedValue(new Error('DB exploded'));
       const res = await GET(makeRequest({}));
       expect(res.status).toBe(500);
       const body = await res.json();

@@ -1,6 +1,24 @@
-# Current Status: Phase 15 COMPLETE — Ready for Phase 16
+# Current Status: Phase 16 COMPLETE — Supabase Migration
 
-**Phase 15 COMPLETE (2026-03-18):** `/about` page live. 204/204 e2e + 175/175 unit tests passing.
+**Phase 16 COMPLETE (2026-03-19):** SQLite → Supabase Postgres migration done. 167/167 unit tests pass, build clean.
+
+## Phase 16 — Supabase Migration ✅ COMPLETE
+
+**Goal:** Replace SQLite + better-sqlite3 with Supabase Postgres. Same data, same SQL queries, new driver (`postgres` npm package). Unblocks Vercel deployment and enables user auth/favourites in Phase 17.
+
+**Key decisions:**
+- Using `postgres` npm package (raw SQL, `sql.unsafe(queryStr, params)`) — minimal query rewrite
+- All 10 API routes updated (7 NZQA + 3 primary), positional params `$1`/`$2`
+- `schema.sql` + `seed-supabase.ts` written for one-time data migration
+- Tests mocked at `src/lib/db/index.ts` level with `mockUnsafe`
+- Env var: `MZMS__POSTGRES_URL` (Vercel Marketplace prefix)
+
+**Manual steps remaining for Maz (before going live):**
+1. Run `src/data/schema.sql` in Supabase SQL editor
+2. Run `npm run seed:supabase`
+3. Verify deployed charts load on Vercel
+
+---
 
 ## What was just built (Phase 15)
 

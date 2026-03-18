@@ -1,15 +1,7 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-
-let db: Database.Database | null = null;
-
-export function getPrimaryDb(): Database.Database {
-  if (!db) {
-    const dbPath = path.join(process.cwd(), 'src/data/primary.db');
-    db = new Database(dbPath, { readonly: true });
-  }
-  return db;
-}
+// Primary school data uses the same Postgres connection as the NZQA data.
+// All tables (timss_nz_yr5, timss_intl_2023, nmssa_maths, curriculum_insights_maths)
+// live in the same Supabase database.
+export { getDb as getPrimaryDb } from './index';
 
 export interface TimssNzRow {
   id: number;

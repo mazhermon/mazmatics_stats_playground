@@ -1,14 +1,19 @@
-import Database from 'better-sqlite3';
-import path from 'path';
+import postgres from 'postgres';
 
-let db: Database.Database | null = null;
+let sql: ReturnType<typeof postgres> | null = null;
 
-export function getDb(): Database.Database {
-  if (!db) {
-    const dbPath = path.join(process.cwd(), 'src/data/nzqa.db');
-    db = new Database(dbPath, { readonly: true });
+export function getDb() {
+  if (!sql) {
+    if (!process.env.MZMS__POSTGRES_URL) {
+      throw new Error('MZMS__POSTGRES_URL environment variable is not set');
+    }
+    sql = postgres(process.env.MZMS__POSTGRES_URL, {
+      max: 5,
+      idle_timeout: 20,
+      connect_timeout: 10,
+    });
   }
-  return db;
+  return sql;
 }
 
 export type SubjectRow = {
