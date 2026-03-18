@@ -31,13 +31,14 @@ Client wrapper: `src/app/nzqa-scholarship/NzqaScholarshipClient.tsx` — dynamic
 
 ---
 
-#### `/primary-maths` — Primary School Maths Feature (Phase 8)
+#### `/primary-maths` — Primary School Maths Feature (Phase 8 + 13)
 
 | Chart | File | Notes |
 |---|---|---|
 | TIMSSTrendChart | `src/components/charts/TIMSSTrendChart.tsx` | D3 line — NZ 1995–2023 TIMSS, AUS/ENG context, gender toggle |
 | TIMSSWorldRanking | `src/components/charts/TIMSSWorldRanking.tsx` | Horizontal bar — 21 countries, NZ highlighted, intl avg line |
 | NMSSAEquityGaps | `src/components/charts/NMSSAEquityGaps.tsx` | Grouped bar — Y4 vs Y8, ethnicity/decile/gender, CI error bars |
+| NMSSATrendChart | `src/components/charts/NMSSATrendChart.tsx` | Connected dot/line — 3 NMSSA cycles (2013/2018/2022), CI error bars, all breakdowns |
 | CurriculumInsightsPipeline | `src/components/charts/CurriculumInsightsPipeline.tsx` | Stacked bar — % meeting/behind at Y3/Y6/Y8, 2023 vs 2024 toggle |
 
 Page: `src/app/primary-maths/page.tsx` — 4 sections + hero + cross-link to secondary
@@ -134,17 +135,32 @@ Client wrapper: `src/app/nzqa-maths/NzqaMathsClient.tsx` — all chart dynamic i
 
 ---
 
-### Test Coverage — COMPLETE
+### Phase 13 — NMSSA Trend Chart (2026-03-18, COMPLETE)
 
-**All tests green as of 2026-03-18.**
+Added `NMSSATrendChart` to `/primary-maths`. Shows Y4 and Y8 mean scale scores across 3 cycles (2013, 2018, 2022) with 95% CI error bars, Year level toggle, and National/Ethnicity/Gender/Decile grouping.
+
+- `nmssa_maths` table expanded from 20 → 60 rows (2013 + 2018 data seeded)
+- 2013 reconstructed on 2018 MS scale via linking exercise (NMSSA Report 19)
+- New chart: `src/components/charts/NMSSATrendChart.tsx`
+- New unit tests: `src/__tests__/api/nmssa.test.ts` (20 tests)
+- Extended: `e2e/primary-maths.spec.ts` (+11 tests, now 40 total)
+
+---
+
+### Test Coverage — current as of Phase 13
 
 ```
-npm test            → 87 unit tests passing
-npm run test:e2e    → 116 e2e tests passing (chromium, ~4 min)
+npm test            → 175 unit tests passing
+npm run test:e2e    → 179/181 e2e passing (2 pre-existing failures, chromium, ~5 min)
 npm run test:visual → 5 visual snapshot tests passing
 tsc --noEmit        → clean
 npm run lint        → clean
 ```
+
+Pre-existing e2e failures (not Phase 13):
+- `e2e/creative-pages.spec.ts` `/nzqa-patterns` networkidle timeout (needs setTimeout bump)
+- `e2e/diagnostic.spec.ts` timeline API 500 for `metric=not_achieved_rate&groupBy=ethnicity&level=1`
+See `test-todo.md` for details and fix instructions.
 
 #### Unit tests
 | File | Tests |
@@ -152,6 +168,7 @@ npm run lint        → clean
 | `src/__tests__/nzqa-strings.test.ts` | 14 — narrative accuracy, equity groups, display names |
 | `src/__tests__/api/subjects.test.ts` | 15 — SQL shape, null params, error handling |
 | `src/__tests__/lib/metricComputation.test.ts` | 23 — pass rate, merit+exc, weighted mean, grade band sums |
+| `src/__tests__/api/nmssa.test.ts` | 20 — yearLevel/groupType validation, multi-year response, DB failure |
 | `src/__tests__/api/timeline.test.ts` | ✅ (earlier sessions) |
 | `src/__tests__/palette.test.ts` | ✅ (earlier sessions) |
 | `src/__tests__/hooks/useNzqaData.test.tsx` | ✅ (earlier sessions) |
@@ -161,7 +178,7 @@ npm run lint        → clean
 |---|---|---|
 | `e2e/nzqa-maths.spec.ts` | 36 | All Phase 7 charts + API endpoints |
 | `e2e/creative-pages.spec.ts` | 23 | Creative pages + nav cards |
-| `e2e/primary-maths.spec.ts` | 26 | All Phase 8 charts + API endpoints |
+| `e2e/primary-maths.spec.ts` | 40 | Phase 8+13 charts + API endpoints |
 | `e2e/nzqa-scholarship.spec.ts` | 24 | Phase 10 scholarship API + page + chart controls |
 | `e2e/diagnostic.spec.ts` | 5 | Smoke: page load, API health, scroll screenshots |
 | `e2e/landing.spec.ts` | 2 | Home heading + title |
@@ -244,13 +261,11 @@ GET /api/nzqa/scholarship
 
 ### What's Next (future sessions)
 
-**Phase 10 remaining (Track B — more untapped tables):**
+**Phase 14 (current):** `/data-sources` page — document all 4 data sources with deep-link anchors. Add "About this data ↗" links from all chart pages. See `prompt.md` for full spec.
+
+**Phase 15 onwards (Track B — remaining NZQA untapped tables):**
 - `/nzqa-endorsement` — `qualification_endorsement` table (Merit/Excellence for full NCEA qualifications)
 - `/nzqa-literacy` — `literacy_numeracy` table (co-attainment of literacy/numeracy co-requisite)
-
-**Phase 10 Track A (Phase 8 enrichment — optional):**
-- NMSSA 2013 + 2018 data — extract from S3 PDFs (pdftotext), seed into nmssa_maths table, add NMSSA trend chart (2013→2018→2022)
-- Curriculum Insights demographic breakdowns — Claude Desktop browser needed for ethnicity/gender % at each year level
 
 **P6 — Correlation ideas** (all feasible with single-dimension data):
 - Gender gap by level (does gap widen at L2/L3?)

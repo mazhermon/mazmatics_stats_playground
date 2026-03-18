@@ -1,186 +1,209 @@
-# Phase 13: NMSSA Trend Chart (2013 → 2018 → 2022)
+# Phase 14: Data Sources Page (`/data-sources`)
 
 ## Goal
-Add a longitudinal NMSSA trend chart to `/primary-maths` showing how Year 4 and Year 8 maths achievement has changed across three NMSSA cycles: 2013, 2018, and 2022. Currently only 2022 data is in the DB — this phase seeds the earlier years and builds the chart.
+Build a `/data-sources` page that documents every data source used across Mazmatics Stats. Link to it from every chart section across all pages so users can verify the data they're reading.
 
 ## Progress Tracking
 
 | Step | Status | Description |
 |------|--------|-------------|
-| 1 | ✅ done | Extract 2013 + 2018 NMSSA data from S3 PDFs using pdftotext |
-| 2 | ✅ done | Update seed script + re-seed primary.db with 2013 + 2018 rows |
-| 3 | ✅ done | Check existing `/api/primary/nmssa` route handles multi-year queries |
-| 4 | ✅ done | Build `NMSSATrendChart` component |
-| 5 | ✅ done | Add chart section to `/primary-maths` page |
-| 6 | ✅ done | Write unit tests for API route |
-| 7 | ✅ done | Write e2e tests |
-| 8 | ✅ done | Run full test suite — all tests must pass |
+| 1 | ⬜ todo | Build `/data-sources` page (Server Component, no interactivity) |
+| 2 | ⬜ todo | Add source links to `/nzqa-maths` chart captions |
+| 3 | ⬜ todo | Add source links to `/nzqa-scholarship` chart captions |
+| 4 | ⬜ todo | Add source links to `/primary-maths` chart captions |
+| 5 | ⬜ todo | Add nav card to home page (`/`) |
+| 6 | ⬜ todo | Add footer link to all pages |
+| 7 | ⬜ todo | Write e2e tests |
+| 8 | ⬜ todo | Run full test suite — all tests must pass |
 
 Update this table as each step completes: ⬜ todo → 🔄 in progress → ✅ done
 
 ---
 
-## Step 1 — Extract 2013 + 2018 data from PDFs
+## Step 1 — Build `/data-sources` page
 
-### PDF Sources (from research-findings.md)
-- **2018**: `https://nmssa-production.s3.amazonaws.com/documents/2018_NMSSA_MATHEMATICS.pdf`
-- **2013**: Try `https://nmssa-production.s3.amazonaws.com/documents/2013_NMSSA_MATHEMATICS.pdf` or similar
-- Use: `curl -L <url> -o /tmp/nmssa_YEAR.pdf && pdftotext /tmp/nmssa_YEAR.pdf /tmp/nmssa_YEAR.txt`
-- Then grep/search for the mean scale score tables
+### Route
+`src/app/data-sources/page.tsx` — Server Component (no `'use client'`)
 
-### 2022 data already in DB (reference)
-| Group | Y4 Mean | Y8 Mean |
-|-------|---------|---------|
-| All | 84.0 | 115.8 |
-| Girls | 82.4 | 113.3 |
-| Boys | 85.7 | 118.1 |
-| Māori | 75.3 | 105.0 |
-| Pacific | 72.9 | 101.2 |
-| Asian | 94.0 | 129.5 |
-| NZ European | 86.2 | 119.0 |
-| Low decile | 72.8 | 103.1 |
-| Mid decile | 84.1 | 115.5 |
-| High decile | 89.9 | 124.5 |
+### Page structure
+Header section: "About the data" — short intro (2–3 sentences): all data is publicly sourced from NZ government bodies and international research organisations; links let users verify the numbers independently.
 
-### Known 2018 summary findings (from research-findings.md, use as sanity check)
-- Y8 average ~118.8 (115.8 + 3 units more than 2022 — wait, 2022 < 2018 per notes)
-  Actually: "Y8 average increased 3 MS units from 2013 to 2018" and Y8 2022 = 115.8 < 2018
-  So 2018 Y8 ≈ 118–119? Extract exact figures from PDF.
-- Y4 2018: ~84 (increased 1 unit from 2013, not significant)
-- 45% Year 8 at Level 4+, 81% Year 4 at Level 2+ (2018)
-- Māori gap: -11 units at both Y4 and Y8 (2018)
-- Pacific gap: -15 Y4, -13 Y8 (2018)
+Then one `<section>` per data source, each with an anchor id for deep-linking.
 
-### 2013 fallback (if PDF unavailable)
-Back-calculated estimates from research-findings.md:
-- Y4 ≈ 83 MS units
-- Y8 ≈ 112.8 MS units (115.8 - 3)
-If using estimates, mark rows with a note in the seed data and show a disclaimer on the chart.
-
-### Target: extract these groups for 2013 + 2018
-- national (Y4 + Y8)
-- gender: Girls, Boys (Y4 + Y8)
-- ethnicity: Māori, Pacific, Asian, NZ European (Y4 + Y8)
-- decile: Low, Mid, High (Y4 + Y8)
+### Sources to include — in this order
 
 ---
 
-## Step 2 — Update seed script
-
-File: `scripts/seed-primary.ts`
-
-Add rows after the existing 2022 nmssa data. DO NOT drop/recreate tables — just INSERT new rows or delete-and-reinsert if needed.
-
-Run: `npx tsx scripts/seed-primary.ts`
-
-Verify: `npx tsx -e "import Database from 'better-sqlite3'; const db = new Database('src/data/primary.db'); console.log(JSON.stringify(db.prepare('SELECT DISTINCT year FROM nmssa_maths ORDER BY year').all()))"`
-
-Expected: `[{"year":2013},{"year":2018},{"year":2022}]`
-
----
-
-## Step 3 — Check existing NMSSA API
-
-File: `src/app/api/primary/nmssa/route.ts`
-
-Read the route. Confirm it:
-- Accepts optional `year` or `yearLevel` params
-- Returns `mean_score`, `ci_lower`, `ci_upper`, `group_type`, `group_value`
-- If it only returns 2022 data or lacks multi-year support, update it to accept `groupType` param and return all years
-
-The trend chart needs: all 3 years, for a given groupType (national/ethnicity/gender/decile), for a given year_level (4 or 8).
+#### `#source-nzqa` — NZQA Secondary School Statistics
+- **Full title:** New Zealand Qualifications Authority — Secondary School Statistics
+- **Publisher:** New Zealand Qualifications Authority (NZQA)
+- **URL:** `https://www.nzqa.govt.nz/about-us/publications/statistics/`
+- **Years:** 2015–2024
+- **What we use:** Subject attainment rates (Not Achieved / Achieved / Merit / Excellence) for NCEA Levels 1, 2, and 3, broken down by ethnicity, gender, school equity group, and region. Also scholarship attainment (Outstanding / Scholarship / No Award) for Calculus and Statistics.
+- **Coverage:** English-medium secondary schools. Reported at national level and by 16 NZ regions.
+- **Key caveats:**
+  - `achieved_rate` is the Achieved-grade-only band — NOT the overall pass rate. Pass rate = `1 − not_achieved_rate`.
+  - Equity group data (Q1–Q5) is available from 2019 onwards only.
+  - Each breakdown is single-dimensional — ethnicity, gender, and region data cannot be cross-tabulated.
+  - Scholarship `Maori` appears without macron in source data.
+- **Used on:** `/nzqa-maths`, `/nzqa-scholarship`
 
 ---
 
-## Step 4 — Build NMSSATrendChart
-
-File: `src/components/charts/NMSSATrendChart.tsx`
-
-### Chart design
-- **Type**: dot plot / connected line chart (only 3 time points: 2013, 2018, 2022)
-- **X-axis**: year (categorical or linear, 3 points)
-- **Y-axis**: mean scale score (MS units)
-- **Error bars**: show 95% CI (ci_lower, ci_upper) as vertical bars through each dot
-- **Lines**: connect the 3 dots per group
-
-### Controls
-- **Year level**: Year 4 / Year 8 (default: Year 8)
-- **Group**: National / By Ethnicity / By Gender / By Decile (default: National)
-
-### National view
-- Single line + dots for national average
-- Reference label: "MS Scale Score (2013 baseline = 100)"
-- Annotation: if Y8 declined 2018→2022, flag it
-
-### Grouped view (ethnicity/gender/decile)
-- One line + dots per group
-- Colour-coded by group
-- End labels on right side
-- For ethnicity: use ETHNICITY_COLOURS from @/lib/palette
-
-### Colour scheme
-- National: white/slate line
-- Ethnicity: use existing ETHNICITY_COLOURS palette
-- Decile: teal shades (Low = muted, High = bright)
-- Gender: use GENDER_COLOURS
+#### `#source-timss` — TIMSS International Maths Study
+- **Full title:** Trends in International Mathematics and Science Study (TIMSS) 2023 — International Results in Mathematics at Grade 4
+- **Publisher:** IEA (International Association for the Evaluation of Educational Achievement)
+- **URL:** `https://timss2023.org`
+- **Years:** 1995, 2003, 2007, 2011, 2015, 2019, 2023 (every 4 years)
+- **What we use:** NZ Grade 4 (Year 5, age ~9) maths scale scores 1995–2023, by gender. 2023 international country comparison (~58 countries).
+- **Coverage:** Nationally representative sample of Year 5 students in English-medium schools. Tested in February each year.
+- **Key caveats:**
+  - International average is recalculated each cycle based on participating countries — not directly comparable across years.
+  - TIMSS scale is NOT the same as NMSSA MS scale. These are completely separate measurement systems.
+  - AUS/ENG comparison lines are approximate from published reports; exact values may vary slightly by rounding.
+- **Used on:** `/primary-maths`
 
 ---
 
-## Step 5 — Add to /primary-maths page
-
-Files:
-- `src/app/primary-maths/PrimaryMathsClient.tsx` — add NMSSATrendChart dynamic import
-- `src/app/primary-maths/page.tsx` — add new section between existing NMSSA section and Curriculum Insights
-
-Section heading: "Three cycles of NMSSA — how has achievement shifted?"
-Text: explain that NMSSA sampled Year 4 and Year 8 in 2013, 2018, and 2022. Note the scale used (MS units, 2013 baseline ≈ 100 for combined Y4+Y8). Note that Y8 showed a significant decline 2018→2022 particularly for girls, Māori, and Pacific.
+#### `#source-nmssa` — NMSSA Maths Achievement Reports
+- **Full title:** National Monitoring Study of Student Achievement — Mathematics and Statistics
+  - Report 19: Mathematics and Statistics 2018
+  - Report 30: Mathematics and Statistics 2022
+- **Publisher:** University of Otago / NZCER on behalf of the Ministry of Education
+- **URLs:**
+  - 2022: `https://nmssa-production.s3.amazonaws.com/documents/NMSSA_2022_Mathematics_Achievement_Report.pdf`
+  - 2018: `https://nmssa-production.s3.amazonaws.com/documents/2018_NMSSA_MATHEMATICS.pdf`
+- **Years:** 2013, 2018, 2022 (3 cycles)
+- **What we use:** Mean Scale Score (MS units) for Year 4 and Year 8 students, by ethnicity, gender, and school decile band.
+- **Coverage:** ~2,000 students per year level, English-medium state and integrated schools. Stratified sample by decile, region, and school size.
+- **Key caveats:**
+  - MS scale is designed so the combined 2013 average ≈ 100 with SD ≈ 20. Year 4 and Year 8 are NOT on the same sub-scale — a score of 84 at Y4 is not comparable to 84 at Y8.
+  - 2013 values in our data are reconstructed on the 2018 MS scale via a linking exercise (NMSSA Report 19, Appendix 6). They differ from the original 2013 report figures.
+  - 95% confidence intervals for 2013 are approximated from 2018 standard errors (similar sample sizes). Treat 2013 CIs as indicative.
+  - NMSSA assessed at Year 4 and Year 8; the successor programme (Curriculum Insights) assesses at Year 3, Year 6, and Year 8.
+- **Used on:** `/primary-maths`
 
 ---
 
-## Step 6 — Unit tests
+#### `#source-curriculum-insights` — Curriculum Insights Dashboard
+- **Full title:** Curriculum Insights Dashboard Reports 2023 and 2024
+- **Publisher:** University of Otago / NZCER on behalf of the Ministry of Education
+- **URL:** `https://curriculuminsights.otago.ac.nz`
+- **Years:** 2023, 2024
+- **What we use:** Percentage of students meeting / approaching / behind provisional NZ Curriculum benchmarks, at Year 3, Year 6, and Year 8.
+- **Coverage:** Nationally representative sample of Year 3, Year 6, and Year 8 students. Successor to NMSSA (launched 2023).
+- **Key caveats:**
+  - Uses % meeting benchmarks — NOT the MS scale score used by NMSSA. These two datasets cannot be compared on the same chart.
+  - Year levels changed: NMSSA measured Year 4 + Year 8; Curriculum Insights measures Year 3 + Year 6 + Year 8.
+  - No statistically significant change was observed between 2023 and 2024 at any year level.
+  - Demographic breakdowns (ethnicity, gender) are available in interactive data windows only — not included in our database.
+- **Used on:** `/primary-maths`
 
-File: `src/__tests__/api/nmssa.test.ts` (if it doesn't already exist)
+---
 
-Check: does `src/__tests__/api/nmssa.test.ts` exist? If not, create it following the pattern from `endorsement.test.ts`.
+### Design
+- Dark background (`bg-slate-950`), matching existing pages
+- Each source = a card (`bg-slate-900 rounded-xl p-6`) with:
+  - Source name as `<h2>` with gradient text, id= anchor
+  - Used-on chips: small `<span>` badges linking to the relevant page
+  - Publisher / URL / Years as a small metadata row
+  - "What we use" paragraph
+  - Collapsible or always-visible caveats list
+  - External link button to the original source
 
-Cover:
-- groupType validation (invalid → 400 if the route validates it)
-- yearLevel param handling
-- multi-year response shape
-- DB failure → 500
+No interactivity required — Server Component. No dynamic imports needed.
+
+---
+
+## Step 2 — Add source links to `/nzqa-maths`
+
+File: `src/app/nzqa-maths/page.tsx`
+
+In the footer section (`{strings.dataNote}` paragraph), add a link:
+```
+Source: NZQA Secondary School Statistics 2015–2024.
+<Link href="/data-sources#source-nzqa">About this data ↗</Link>
+```
+
+Keep the existing `{strings.dataNote}` and `{strings.decileNote}` — just append the link.
+
+---
+
+## Step 3 — Add source links to `/nzqa-scholarship`
+
+File: `src/app/nzqa-scholarship/page.tsx`
+
+Same pattern — add `<Link href="/data-sources#source-nzqa">About this data ↗</Link>` in the footer area.
+
+---
+
+## Step 4 — Add source links to `/primary-maths`
+
+File: `src/app/primary-maths/page.tsx`
+
+Three separate links to add, one per data source:
+- TIMSS footer note → `<Link href="/data-sources#source-timss">About this data ↗</Link>`
+- NMSSA footer note → `<Link href="/data-sources#source-nmssa">About this data ↗</Link>`
+- Curriculum Insights footer note → `<Link href="/data-sources#source-curriculum-insights">About this data ↗</Link>`
+
+---
+
+## Step 5 — Add nav card to home page
+
+File: `src/app/page.tsx`
+
+Add a small card or link in the home page footer area (NOT a primary nav card — this is utility navigation). Something like:
+```
+All data is publicly sourced. <Link href="/data-sources">View data sources →</Link>
+```
+
+Or if there's a good place for a card, a compact one labelled "Data Sources & Methodology".
+
+---
+
+## Step 6 — Add footer link to all pages
+
+Each page (`/nzqa-maths`, `/nzqa-scholarship`, `/primary-maths`) already has a footer. Add a small `<Link href="/data-sources">Data sources & methodology →</Link>` line at the bottom of each footer, styled like the existing `text-xs text-slate-600 font-mono` lines.
 
 ---
 
 ## Step 7 — E2E tests
 
-File: `e2e/primary-maths.spec.ts` (EXTEND, don't replace)
-
-Add a new describe block: `NMSSATrendChart`
+File: `e2e/data-sources.spec.ts` (new file)
 
 Tests:
-- Year 4 / Year 8 toggle buttons are visible
-- National / By Ethnicity / By Gender / By Decile toggles visible
-- SVG renders
-- Switching to Year 4 does not crash
-- Switching to By Ethnicity does not crash
-
-Also verify: API returns 3 years when called without year filter.
+- Page loads without console errors
+- All 4 source section headings are visible (NZQA, TIMSS, NMSSA, Curriculum Insights)
+- All 4 anchor ids are present in the DOM (`#source-nzqa`, `#source-timss`, `#source-nmssa`, `#source-curriculum-insights`)
+- Deep link `GET /data-sources#source-timss` scrolls to TIMSS section (or at least the anchor exists)
+- "About this data" links on `/nzqa-maths` and `/primary-maths` point to correct anchors
+- External source links have `target="_blank"` and `rel="noopener noreferrer"`
+- Nav link to `/data-sources` exists on home page
 
 ---
 
 ## Step 8 — Full test run
 
-Run: `npm run test:e2e -- --reporter=list`
-Run: `npm test`
+```bash
+npm run test:e2e -- --reporter=list
+npm test
+```
 
-All tests must pass. Fix any failures before outputting the completion promise.
+All tests must pass before outputting the completion promise.
 
 ---
 
-## Data Constraints
-- NMSSA uses Mean Scale Score (MS units), NOT percentages — keep chart Y-axis in MS units
-- 95% CIs are available for all groups — always show them
-- 2013 data may be estimated if PDF extraction fails — note this clearly in the UI
+## Design reference
+
+Follow the same dark theme as existing pages:
+- Background: `#020617` with subtle grid
+- Source card border: `border-slate-800`
+- Heading gradient: `linear-gradient(to left, #47A5F1, #10b981)` (teal/blue, same as primary-maths)
+- "Used on" chip: `bg-slate-800 text-slate-400 rounded-full px-2 py-0.5 text-xs font-mono`
+- External link icon: ↗ (text, no icon library needed)
+- Caveat items: `text-amber-500/80` for warnings, `text-slate-400` for info
+
+---
 
 ## Completion Promise
-<promise>PHASE_13_COMPLETE</promise>
+<promise>PHASE_14_COMPLETE</promise>

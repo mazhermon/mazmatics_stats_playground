@@ -1,31 +1,42 @@
-# Current Work: Phase 11 — Remaining Untapped Tables
+# Current Work: Phase 14 — Data Sources Page
 
-**Phase 10 COMPLETE (2026-03-18):** `/nzqa-scholarship` live, 116 e2e tests passing.
+**Phase 13 COMPLETE (2026-03-18):** NMSSA trend chart live, 3 cycles seeded (2013/2018/2022), 175 unit + 179/181 e2e passing.
 
-**Goal:** Continue Track B — build pages for the two remaining untapped DB tables.
+**Goal:** Build `/data-sources` page documenting all data sources with deep-link anchors. Add "About this data" links from all chart pages.
 
-## Track B — Remaining Pages
+## Phase 14 Steps
+
+| Step | Description |
+|------|-------------|
+| 1 | Build `/data-sources` page — 4 source cards: NZQA, TIMSS, NMSSA, Curriculum Insights |
+| 2 | Add source links to `/nzqa-maths` footer |
+| 3 | Add source links to `/nzqa-scholarship` footer |
+| 4 | Add source links to `/primary-maths` footer (3 separate links) |
+| 5 | Add nav link on home page |
+| 6 | Add footer link on all pages |
+| 7 | E2E tests (`e2e/data-sources.spec.ts`) |
+| 8 | Full test suite — all must pass |
+
+See `prompt.md` for full spec including source content, design, and anchor ids.
+
+## Phase 14 Completion Criteria
+- `/data-sources` page live with all 4 source cards
+- Deep-link anchors working: `#source-nzqa`, `#source-timss`, `#source-nmssa`, `#source-curriculum-insights`
+- "About this data ↗" links on all chart pages
+- e2e tests passing
+
+---
+
+## Future Work
+
+### Track B — Remaining NZQA untapped tables (lower priority, post Phase 14)
 
 | Page/Section | Data Source | Charts | Status |
 |---|---|---|---|
-| `/nzqa-scholarship` | `scholarship` table | ScholarshipTrendChart + ScholarshipBreakdownChart | ✅ DONE |
 | `/nzqa-endorsement` | `qualification_endorsement` table — already seeded | Merit/Excellence rates by group + trend | ❌ todo |
 | `/nzqa-literacy` | `literacy_numeracy` table — already seeded | Co-attainment rate by group + year-on-year | ❌ todo |
 
-## Track A — Phase 8 Enrichment (lower priority)
-
-| Item | Status |
-|------|--------|
-| Extract NMSSA 2013 + 2018 from S3 PDFs (poppler/pdftotext available) | ❌ todo |
-| Add NMSSA trend chart (2013→2018→2022) to `/primary-maths` | ❌ todo |
-| Demographic breakdowns for Curriculum Insights 2023–2024 (needs Claude Desktop browser) | ❌ todo |
-
-## Phase 11 Completion Criteria
-- `/nzqa-endorsement` live with real DB data, API route, e2e tests
-- OR `/nzqa-literacy` live with real DB data, API route, e2e tests
-- `npm run test:e2e` passes with new tests included
-
-## Before starting any new page — inspect the DB table first:
+## Before starting any new NZQA page — inspect the DB table first:
 ```bash
 npx tsx -e "
 import Database from 'better-sqlite3';
