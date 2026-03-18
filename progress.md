@@ -95,17 +95,26 @@
 
 ---
 
+## Phase 14 — Data Sources Page ✅ COMPLETE (2026-03-18)
+
+- [x] Built `/data-sources` Server Component — 4 source cards: NZQA, TIMSS, NMSSA, Curriculum Insights
+- [x] Deep-link anchors: `#source-nzqa`, `#source-timss`, `#source-nmssa`, `#source-curriculum-insights`
+- [x] "About this data ↗" links in footers of `/nzqa-maths`, `/nzqa-scholarship`, `/primary-maths`
+- [x] "Data sources & methodology →" footer link on all three pages
+- [x] "View data sources →" link on home page
+- [x] `e2e/data-sources.spec.ts` — 9 tests (page load, headings, anchors, external link attrs, cross-page links)
+- [x] Full test suite: 190/190 e2e, 175/175 unit — all green
+
+**Note on dev server:** Pages `/nzqa-maths`, `/nzqa-scholarship`, `/primary-maths` require pre-warming on first access in dev mode — dev server takes ~20-30s to compile them. They return 500 instantly if the dev server is in a bad state. Fix: `pkill -f "next dev"`, restart dev server, curl all pages once before running tests.
+
 ## Ready for next session
 
-**Suggested next focus — choose one:**
+See `plan.md` and `summary.md` for full context.
 
-**A) Phase 8 tests** — Add Playwright e2e tests for /primary-maths (4 API endpoints + 4 charts)
+**Suggested next focus:**
 
-**B) Phase 8 data enrichment** — Extract NMSSA 2013/2018 from PDFs; use Claude Desktop for CI ethnicity breakdowns; add NMSSA trend chart (2013→2018→2022)
+**A) Phase 15 — Next feature page** — Check `visualisations.md` for ideas or continue with remaining NZQA tables (if any untapped)
 
-**C) Phase 9 — NZQA secondary untapped tables:**
-- `scholarship` table — ethnicity/equity/region breakdown of NZ's top academic award
-- `qualification_endorsement` — Merit/Excellence endorsement of full NCEA qualifications
-- `literacy_numeracy` — co-attainment of literacy/numeracy co-requisite
+**B) Visual regression** — Add `/primary-maths` NMSSATrendChart visual snapshot
 
-See `summary.md` for full context of all existing features.
+**C) Security audit** — Run Shannon pentest on API routes (SQL injection check) — see `plan.md` for details

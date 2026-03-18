@@ -1,29 +1,25 @@
-# Current Work: Phase 14 — Data Sources Page
+# Current Status: Phase 14 COMPLETE — Ready for Phase 15
 
-**Phase 13 COMPLETE (2026-03-18):** NMSSA trend chart live, 3 cycles seeded (2013/2018/2022), 175 unit + 179/181 e2e passing.
+**Phase 14 COMPLETE (2026-03-18):** `/data-sources` page live. All "About this data" links added. 190/190 e2e + 175/175 unit tests passing.
 
-**Goal:** Build `/data-sources` page documenting all data sources with deep-link anchors. Add "About this data" links from all chart pages.
+## What was just built (Phase 14)
 
-## Phase 14 Steps
+- `src/app/data-sources/page.tsx` — Server Component, 4 source cards with anchors
+- "About this data ↗" footer links on `/nzqa-maths`, `/nzqa-scholarship`, `/primary-maths`
+- "Data sources & methodology →" footer link on all three pages
+- "View data sources →" link on home page
+- `e2e/data-sources.spec.ts` — 9 e2e tests, all passing
 
-| Step | Description |
-|------|-------------|
-| 1 | Build `/data-sources` page — 4 source cards: NZQA, TIMSS, NMSSA, Curriculum Insights |
-| 2 | Add source links to `/nzqa-maths` footer |
-| 3 | Add source links to `/nzqa-scholarship` footer |
-| 4 | Add source links to `/primary-maths` footer (3 separate links) |
-| 5 | Add nav link on home page |
-| 6 | Add footer link on all pages |
-| 7 | E2E tests (`e2e/data-sources.spec.ts`) |
-| 8 | Full test suite — all must pass |
-
-See `prompt.md` for full spec including source content, design, and anchor ids.
-
-## Phase 14 Completion Criteria
-- `/data-sources` page live with all 4 source cards
-- Deep-link anchors working: `#source-nzqa`, `#source-timss`, `#source-nmssa`, `#source-curriculum-insights`
-- "About this data ↗" links on all chart pages
-- e2e tests passing
+## Dev server note (important)
+Pages `/nzqa-maths`, `/nzqa-scholarship`, `/primary-maths` need pre-warming on first dev-server access. If they return 500:
+```bash
+pkill -f "next dev"
+npm run dev &
+sleep 8
+curl -s http://localhost:3000/nzqa-maths > /dev/null
+curl -s http://localhost:3000/primary-maths > /dev/null
+curl -s http://localhost:3000/nzqa-scholarship > /dev/null
+```
 
 ---
 

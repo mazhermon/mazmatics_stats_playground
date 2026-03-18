@@ -1,6 +1,29 @@
 # Session Summary
 
-## Current Project State (as of 2026-03-18, updated Phase 10)
+## Current Project State (as of 2026-03-18, updated Phase 14)
+
+### `/data-sources` — Data Sources & Methodology Page (Phase 14 — NEW)
+
+**Route:** `src/app/data-sources/page.tsx` — Server Component, fully static, no client JS
+**Purpose:** Documents all 4 data sources used across the app with deep-link anchors, publisher metadata, caveats, and external links.
+
+| Anchor | Source | Used on |
+|---|---|---|
+| `#source-nzqa` | NZQA Secondary School Statistics 2015–2024 | `/nzqa-maths`, `/nzqa-scholarship` |
+| `#source-timss` | TIMSS International Maths Study 1995–2023 | `/primary-maths` |
+| `#source-nmssa` | NMSSA Reports 19 (2018) + 30 (2022) | `/primary-maths` |
+| `#source-curriculum-insights` | Curriculum Insights Dashboard 2023–2024 | `/primary-maths` |
+
+**Links added to existing pages:**
+- `/nzqa-maths` footer: "About this data ↗" → `#source-nzqa` + "Data sources & methodology →"
+- `/nzqa-scholarship` footer: "About this data ↗" → `#source-nzqa` + "Data sources & methodology →"
+- `/primary-maths` footer: 3 separate "About this data ↗" links (TIMSS / NMSSA / Curriculum Insights) + "Data sources & methodology →"
+- Home page: "View data sources →" utility link
+
+**Tests:** `e2e/data-sources.spec.ts` — 9 tests (page load, headings, anchors, external link attrs, cross-page links)
+**Final test count: 190/190 e2e, 175/175 unit — all green**
+
+---
 
 ### What's been built — complete picture
 
