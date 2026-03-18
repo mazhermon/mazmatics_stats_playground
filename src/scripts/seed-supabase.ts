@@ -14,7 +14,8 @@
  * Once seeded, this script does not need to run again unless data changes.
  */
 
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
 import Database from 'better-sqlite3';
 import postgres from 'postgres';
 import path from 'path';
