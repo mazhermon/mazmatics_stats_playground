@@ -7,14 +7,14 @@ Add a longitudinal NMSSA trend chart to `/primary-maths` showing how Year 4 and 
 
 | Step | Status | Description |
 |------|--------|-------------|
-| 1 | ⬜ todo | Extract 2013 + 2018 NMSSA data from S3 PDFs using pdftotext |
-| 2 | ⬜ todo | Update seed script + re-seed primary.db with 2013 + 2018 rows |
-| 3 | ⬜ todo | Check existing `/api/primary/nmssa` route handles multi-year queries |
-| 4 | ⬜ todo | Build `NMSSATrendChart` component |
-| 5 | ⬜ todo | Add chart section to `/primary-maths` page |
-| 6 | ⬜ todo | Write unit tests for API route |
-| 7 | ⬜ todo | Write e2e tests |
-| 8 | ⬜ todo | Run full test suite — all tests must pass |
+| 1 | ✅ done | Extract 2013 + 2018 NMSSA data from S3 PDFs using pdftotext |
+| 2 | ✅ done | Update seed script + re-seed primary.db with 2013 + 2018 rows |
+| 3 | ✅ done | Check existing `/api/primary/nmssa` route handles multi-year queries |
+| 4 | ✅ done | Build `NMSSATrendChart` component |
+| 5 | ✅ done | Add chart section to `/primary-maths` page |
+| 6 | ✅ done | Write unit tests for API route |
+| 7 | ✅ done | Write e2e tests |
+| 8 | ✅ done | Run full test suite — all tests must pass |
 
 Update this table as each step completes: ⬜ todo → 🔄 in progress → ✅ done
 

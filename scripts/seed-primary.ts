@@ -177,6 +177,51 @@ const insertNmssa = db.prepare(`
 `);
 
 const nmssaRows = [
+  // ——— Year 4, 2013 (reconstructed on 2018 MS scale; back-calculated from NMSSA Report 19 Tables A1.1+3.1)
+  // CIs approximated using same half-width as 2018 (similar sample sizes ~2000/yr level)
+  { year: 2013, year_level: 4, group_type: 'national', group_value: null,        mean_score: 83.4, ci_lower: 82.4, ci_upper: 84.4, sd: 19.3, n: null, pct_at_curriculum_level: 81.0 },
+  { year: 2013, year_level: 4, group_type: 'gender',   group_value: 'Girls',     mean_score: 84.4, ci_lower: 83.0, ci_upper: 85.8, sd: 19.0, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 4, group_type: 'gender',   group_value: 'Boys',      mean_score: 82.5, ci_lower: 81.1, ci_upper: 83.9, sd: 19.5, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 4, group_type: 'ethnicity',group_value: 'Māori',     mean_score: 74.6, ci_lower: 72.5, ci_upper: 76.7, sd: 18.3, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 4, group_type: 'ethnicity',group_value: 'Pacific',   mean_score: 72.7, ci_lower: 70.2, ci_upper: 75.2, sd: 18.3, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 4, group_type: 'ethnicity',group_value: 'Asian',     mean_score: 90.1, ci_lower: 87.5, ci_upper: 92.7, sd: 18.1, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 4, group_type: 'ethnicity',group_value: 'NZ European',mean_score: 86.7, ci_lower: 85.5, ci_upper: 87.9, sd: 18.0, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 4, group_type: 'decile',   group_value: 'Low',       mean_score: 71.6, ci_lower: 69.6, ci_upper: 73.6, sd: 18.7, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 4, group_type: 'decile',   group_value: 'Mid',       mean_score: 83.3, ci_lower: 81.8, ci_upper: 84.8, sd: 18.0, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 4, group_type: 'decile',   group_value: 'High',      mean_score: 89.6, ci_lower: 88.2, ci_upper: 91.0, sd: 17.1, n: null, pct_at_curriculum_level: null },
+  // ——— Year 8, 2013 (reconstructed on 2018 MS scale; back-calculated from NMSSA Report 19 Tables A1.2+3.1)
+  { year: 2013, year_level: 8, group_type: 'national', group_value: null,        mean_score: 114.3, ci_lower: 113.2, ci_upper: 115.4, sd: 20.7, n: null, pct_at_curriculum_level: 41.0 },
+  { year: 2013, year_level: 8, group_type: 'gender',   group_value: 'Girls',     mean_score: 112.8, ci_lower: 111.3, ci_upper: 114.3, sd: 19.8, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 8, group_type: 'gender',   group_value: 'Boys',      mean_score: 115.6, ci_lower: 114.0, ci_upper: 117.2, sd: 21.4, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 8, group_type: 'ethnicity',group_value: 'Māori',     mean_score: 107.2, ci_lower: 105.2, ci_upper: 109.2, sd: 18.4, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 8, group_type: 'ethnicity',group_value: 'Pacific',   mean_score: 99.3,  ci_lower: 96.5,  ci_upper: 102.1, sd: 18.5, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 8, group_type: 'ethnicity',group_value: 'Asian',     mean_score: 126.4, ci_lower: 123.2, ci_upper: 129.6, sd: 21.7, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 8, group_type: 'ethnicity',group_value: 'NZ European',mean_score: 118.2, ci_lower: 116.9, ci_upper: 119.5, sd: 19.4, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 8, group_type: 'decile',   group_value: 'Low',       mean_score: 101.2, ci_lower: 99.1,  ci_upper: 103.3, sd: 18.6, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 8, group_type: 'decile',   group_value: 'Mid',       mean_score: 114.0, ci_lower: 112.3, ci_upper: 115.7, sd: 19.9, n: null, pct_at_curriculum_level: null },
+  { year: 2013, year_level: 8, group_type: 'decile',   group_value: 'High',      mean_score: 122.7, ci_lower: 121.1, ci_upper: 124.3, sd: 19.6, n: null, pct_at_curriculum_level: null },
+  // ——— Year 4, 2018 (NMSSA Report 19: Mathematics and Statistics 2018, Table A1.1)
+  { year: 2018, year_level: 4, group_type: 'national', group_value: null,        mean_score: 83.9, ci_lower: 82.9, ci_upper: 84.9, sd: 19.3, n: 2105, pct_at_curriculum_level: 81.0 },
+  { year: 2018, year_level: 4, group_type: 'gender',   group_value: 'Girls',     mean_score: 82.5, ci_lower: 81.1, ci_upper: 83.9, sd: 19.0, n: 1035, pct_at_curriculum_level: null },
+  { year: 2018, year_level: 4, group_type: 'gender',   group_value: 'Boys',      mean_score: 85.2, ci_lower: 83.8, ci_upper: 86.6, sd: 19.5, n: 1070, pct_at_curriculum_level: null },
+  { year: 2018, year_level: 4, group_type: 'ethnicity',group_value: 'Māori',     mean_score: 75.2, ci_lower: 73.1, ci_upper: 77.3, sd: 18.3, n: 439,  pct_at_curriculum_level: null },
+  { year: 2018, year_level: 4, group_type: 'ethnicity',group_value: 'Pacific',   mean_score: 71.1, ci_lower: 68.6, ci_upper: 73.6, sd: 18.3, n: 287,  pct_at_curriculum_level: null },
+  { year: 2018, year_level: 4, group_type: 'ethnicity',group_value: 'Asian',     mean_score: 91.4, ci_lower: 88.8, ci_upper: 94.0, sd: 18.1, n: 263,  pct_at_curriculum_level: null },
+  { year: 2018, year_level: 4, group_type: 'ethnicity',group_value: 'NZ European',mean_score: 87.5, ci_lower: 86.3, ci_upper: 88.7, sd: 18.0, n: 1328, pct_at_curriculum_level: null },
+  { year: 2018, year_level: 4, group_type: 'decile',   group_value: 'Low',       mean_score: 71.6, ci_lower: 69.6, ci_upper: 73.6, sd: 18.7, n: 483,  pct_at_curriculum_level: null },
+  { year: 2018, year_level: 4, group_type: 'decile',   group_value: 'Mid',       mean_score: 83.3, ci_lower: 81.8, ci_upper: 84.8, sd: 18.0, n: 772,  pct_at_curriculum_level: null },
+  { year: 2018, year_level: 4, group_type: 'decile',   group_value: 'High',      mean_score: 91.4, ci_lower: 90.0, ci_upper: 92.8, sd: 17.1, n: 850,  pct_at_curriculum_level: null },
+  // ——— Year 8, 2018 (NMSSA Report 19, Table A1.2)
+  { year: 2018, year_level: 8, group_type: 'national', group_value: null,        mean_score: 117.1, ci_lower: 116.0, ci_upper: 118.2, sd: 20.7, n: 1985, pct_at_curriculum_level: 45.0 },
+  { year: 2018, year_level: 8, group_type: 'gender',   group_value: 'Girls',     mean_score: 116.1, ci_lower: 114.6, ci_upper: 117.6, sd: 19.8, n: 949,  pct_at_curriculum_level: null },
+  { year: 2018, year_level: 8, group_type: 'gender',   group_value: 'Boys',      mean_score: 118.0, ci_lower: 116.4, ci_upper: 119.6, sd: 21.4, n: 1036, pct_at_curriculum_level: null },
+  { year: 2018, year_level: 8, group_type: 'ethnicity',group_value: 'Māori',     mean_score: 108.3, ci_lower: 106.3, ci_upper: 110.3, sd: 18.4, n: 448,  pct_at_curriculum_level: null },
+  { year: 2018, year_level: 8, group_type: 'ethnicity',group_value: 'Pacific',   mean_score: 105.6, ci_lower: 102.8, ci_upper: 108.4, sd: 18.5, n: 245,  pct_at_curriculum_level: null },
+  { year: 2018, year_level: 8, group_type: 'ethnicity',group_value: 'Asian',     mean_score: 127.0, ci_lower: 123.8, ci_upper: 130.2, sd: 21.7, n: 256,  pct_at_curriculum_level: null },
+  { year: 2018, year_level: 8, group_type: 'ethnicity',group_value: 'NZ European',mean_score: 119.5, ci_lower: 118.2, ci_upper: 120.8, sd: 19.4, n: 1222, pct_at_curriculum_level: null },
+  { year: 2018, year_level: 8, group_type: 'decile',   group_value: 'Low',       mean_score: 105.7, ci_lower: 103.6, ci_upper: 107.8, sd: 18.6, n: 425,  pct_at_curriculum_level: null },
+  { year: 2018, year_level: 8, group_type: 'decile',   group_value: 'Mid',       mean_score: 116.0, ci_lower: 114.3, ci_upper: 117.7, sd: 19.9, n: 739,  pct_at_curriculum_level: null },
+  { year: 2018, year_level: 8, group_type: 'decile',   group_value: 'High',      mean_score: 124.0, ci_lower: 122.4, ci_upper: 125.6, sd: 19.6, n: 821,  pct_at_curriculum_level: null },
   // ——— Year 4, 2022 ———
   { year: 2022, year_level: 4, group_type: 'national', group_value: null,        mean_score: 84.0, ci_lower: 83.0, ci_upper: 85.0, sd: 18.8, n: 2064, pct_at_curriculum_level: 81.8 },
   { year: 2022, year_level: 4, group_type: 'gender',   group_value: 'Girls',     mean_score: 82.4, ci_lower: 81.1, ci_upper: 83.7, sd: 18.0, n: 1060, pct_at_curriculum_level: 81.1 },

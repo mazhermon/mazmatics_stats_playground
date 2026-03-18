@@ -25,3 +25,8 @@ export const CurriculumInsightsPipeline = dynamic(
   () => import('@/components/charts/CurriculumInsightsPipeline').then((m) => ({ default: m.CurriculumInsightsPipeline })),
   { ssr: false, loading: () => <ChartSkeleton height={280} /> }
 );
+
+export const NMSSATrendChart = dynamic(
+  () => import('@/components/charts/NMSSATrendChart').then((m) => ({ default: m.NMSSATrendChart })),
+  { ssr: false, loading: () => <ChartSkeleton height={380} /> }
+);

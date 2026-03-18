@@ -221,13 +221,13 @@ test.describe('NMSSAEquityGaps', () => {
     expect(svgCount).toBeGreaterThan(0);
   });
 
-  test('clicking "By gender" (NMSSA section) does not crash', async ({ page }) => {
+  test('clicking "By gender" (NMSSA equity section) does not crash', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (err) => errors.push(err.message));
 
-    // NMSSAEquityGaps "By gender" is the LAST "By gender" button on the page
-    // (TIMSSTrendChart has the first one)
-    await page.getByRole('button', { name: 'By gender' }).last().click();
+    // NMSSAEquityGaps "By gender" is the 2nd "By gender" button on the page
+    // (TIMSSTrendChart=0, NMSSAEquityGaps=1, NMSSATrendChart=2)
+    await page.getByRole('button', { name: 'By gender' }).nth(1).click();
     await page.waitForTimeout(2000);
 
     expect(errors).toHaveLength(0);
@@ -243,6 +243,107 @@ test.describe('NMSSAEquityGaps', () => {
     await page.waitForTimeout(1500);
 
     expect(errors).toHaveLength(0);
+  });
+});
+
+// ─── NMSSATrendChart ──────────────────────────────────────────────────────────
+
+test.describe('NMSSATrendChart', () => {
+  test.beforeEach(async ({ page }) => {
+    test.setTimeout(60000);
+    await page.goto('/primary-maths');
+    await page.waitForLoadState('networkidle', { timeout: 45000 });
+    await page.waitForTimeout(3000);
+    await page.locator('text=Three cycles of NMSSA').first().scrollIntoViewIfNeeded();
+    await page.waitForTimeout(2000);
+  });
+
+  test('section heading is visible', async ({ page }) => {
+    await expect(page.locator('text=Three cycles of NMSSA').first()).toBeVisible();
+  });
+
+  test('"Year 4" and "Year 8" toggle buttons are visible', async ({ page }) => {
+    await expect(page.getByRole('button', { name: 'Year 4' }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Year 8' }).first()).toBeVisible();
+  });
+
+  test('"National", "By ethnicity", "By gender", "By decile" toggles are visible', async ({ page }) => {
+    // "National" is the 2nd National button (TIMSSTrendChart has the first)
+    await expect(page.getByRole('button', { name: 'National' }).nth(1)).toBeVisible();
+    // "By ethnicity" 2nd: NMSSAEquityGaps=0, NMSSATrendChart=1
+    await expect(page.getByRole('button', { name: 'By ethnicity' }).nth(1)).toBeVisible();
+    // "By gender" 3rd: TIMSSTrendChart=0, NMSSAEquityGaps=1, NMSSATrendChart=2
+    await expect(page.getByRole('button', { name: 'By gender' }).nth(2)).toBeVisible();
+    // "By decile" 2nd: NMSSAEquityGaps=0, NMSSATrendChart=1
+    await expect(page.getByRole('button', { name: 'By decile' }).nth(1)).toBeVisible();
+  });
+
+  test('SVG renders after chart section is visible', async ({ page }) => {
+    const svgCount = await page.locator('svg').count();
+    expect(svgCount).toBeGreaterThan(0);
+  });
+
+  test('switching to Year 4 does not crash', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    await page.getByRole('button', { name: 'Year 4' }).first().click();
+    await page.waitForTimeout(2000);
+
+    expect(errors).toHaveLength(0);
+    const svgCount = await page.locator('svg').count();
+    expect(svgCount).toBeGreaterThan(0);
+  });
+
+  test('switching to By Ethnicity does not crash', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    // NMSSATrendChart "By ethnicity" is the 2nd (index 1) on the page
+    await page.getByRole('button', { name: 'By ethnicity' }).nth(1).click();
+    await page.waitForTimeout(2000);
+
+    expect(errors).toHaveLength(0);
+    const svgCount = await page.locator('svg').count();
+    expect(svgCount).toBeGreaterThan(0);
+  });
+
+  test('switching Year 4 + By Ethnicity does not crash', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (err) => errors.push(err.message));
+
+    await page.getByRole('button', { name: 'Year 4' }).first().click();
+    await page.waitForTimeout(500);
+    await page.getByRole('button', { name: 'By ethnicity' }).nth(1).click();
+    await page.waitForTimeout(2000);
+
+    expect(errors).toHaveLength(0);
+  });
+});
+
+// ─── NMSSATrendChart API ──────────────────────────────────────────────────────
+
+test.describe('NMSSATrendChart API', () => {
+  test('GET /api/primary/nmssa returns all 3 NMSSA years', async ({ request }) => {
+    const res = await request.get('/api/primary/nmssa');
+    expect(res.status()).toBe(200);
+    const json = await res.json();
+    expect(Array.isArray(json.data)).toBe(true);
+    const years = [...new Set(json.data.map((r: { year: number }) => r.year))] as number[];
+    expect(years).toContain(2013);
+    expect(years).toContain(2018);
+    expect(years).toContain(2022);
+  });
+
+  test('GET /api/primary/nmssa?yearLevel=8&groupType=national returns Year 8 national rows', async ({ request }) => {
+    const res = await request.get('/api/primary/nmssa?yearLevel=8&groupType=national');
+    expect(res.status()).toBe(200);
+    const json = await res.json();
+    expect(json.data.length).toBeGreaterThan(0);
+    json.data.forEach((r: { year_level: number; group_type: string }) => {
+      expect(r.year_level).toBe(8);
+      expect(r.group_type).toBe('national');
+    });
   });
 });
 

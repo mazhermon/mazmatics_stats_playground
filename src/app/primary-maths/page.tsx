@@ -4,6 +4,7 @@ import {
   TIMSSTrendChart,
   TIMSSWorldRanking,
   NMSSAEquityGaps,
+  NMSSATrendChart,
   CurriculumInsightsPipeline,
 } from './PrimaryMathsClient';
 
@@ -205,7 +206,32 @@ export default function PrimaryMathsPage() {
 
         <SectionDivider />
 
-        {/* Section 4: Curriculum Insights Pipeline */}
+        {/* Section 4: NMSSA Trend Chart */}
+        <section className="space-y-6">
+          <div className="space-y-3">
+            <GradientHeading>Three cycles of NMSSA — how has achievement shifted?</GradientHeading>
+            <p className="text-slate-400 max-w-2xl leading-relaxed">
+              NMSSA sampled Year 4 and Year 8 in 2013, 2018, and 2022 using a common MS scale
+              (designed so the combined 2013 baseline average ≈ 100). Between 2013 and 2018, Year 8
+              achievement rose by 3 MS units — a statistically significant gain. Between 2018 and 2022
+              it fell back by 1.3 units. Year 4 scores have remained essentially flat across all three cycles.
+            </p>
+            <p className="text-slate-400 max-w-2xl leading-relaxed text-sm">
+              The 2018→2022 decline at Year 8 is sharpest for girls (−2.8 MS), Māori (−3.3 MS), and Pacific
+              students (−4.4 MS) — widening gaps that had narrowed between 2013 and 2018.
+            </p>
+          </div>
+          <NMSSATrendChart />
+          <CaveatBanner>
+            2013 values are reconstructed on the 2018 MS scale via a linking exercise (NMSSA Report 19,
+            Appendix 6). They differ from the original 2013 report figures. CIs for 2013 are approximated
+            from 2018 standard errors — treat them as indicative. Source: NMSSA Reports 19 (2018) and 30 (2022).
+          </CaveatBanner>
+        </section>
+
+        <SectionDivider />
+
+        {/* Section 5: Curriculum Insights Pipeline */}
         <section className="space-y-6">
           <div className="space-y-3">
             <GradientHeading>The primary maths pipeline</GradientHeading>
