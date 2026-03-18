@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 interface NavCard {
   href: string;
   title: string;
@@ -111,6 +113,12 @@ export default function Home() {
         {/* Footer note */}
         <p className="text-sm text-slate-500 pt-4">
           Built with Next.js 15, React 19, Three.js, and D3 · Data: NZQA 2015–2024
+        </p>
+        <p className="text-sm text-slate-600 pt-1">
+          All data is publicly sourced.{' '}
+          <Link href="/data-sources" className="text-slate-500 hover:text-slate-300 underline transition-colors">
+            View data sources →
+          </Link>
         </p>
       </div>
     </main>

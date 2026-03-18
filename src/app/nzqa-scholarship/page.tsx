@@ -173,6 +173,12 @@ export default function NzqaScholarshipPage() {
             Scholarship is a separate qualification from NCEA — only top-year (Year 13) students typically sit it.
             Award rate = Outstanding + Scholarship (both are passing awards). No Award = attempted but did not earn a Scholarship award.
           </p>
+          <p className="text-xs text-slate-600 font-mono">
+            Source: NZQA Secondary School Statistics 2015–2024.{' '}
+            <Link href="/data-sources#source-nzqa" className="text-blue-500/70 hover:text-blue-400 transition-colors">
+              About this data ↗
+            </Link>
+          </p>
           <p className="text-xs text-slate-700 font-mono">
             Built with Next.js · D3.js · data from{' '}
             <span className="text-slate-500">NZQA Secondary School Statistics</span>
@@ -185,6 +191,11 @@ export default function NzqaScholarshipPage() {
               All explorers →
             </Link>
           </div>
+          <p className="text-xs text-slate-700 font-mono">
+            <Link href="/data-sources" className="text-slate-600 hover:text-slate-400 transition-colors">
+              Data sources &amp; methodology →
+            </Link>
+          </p>
         </footer>
 
       </main>

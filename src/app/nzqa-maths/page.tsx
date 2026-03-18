@@ -237,9 +237,20 @@ export default function NzqaMathsPage() {
         <footer className="space-y-2 pb-8">
           <p className="text-xs text-slate-600 font-mono">{strings.dataNote}</p>
           <p className="text-xs text-slate-600 font-mono">{strings.decileNote}</p>
+          <p className="text-xs text-slate-600 font-mono">
+            Source: NZQA Secondary School Statistics 2015–2024.{' '}
+            <Link href="/data-sources#source-nzqa" className="text-blue-500/70 hover:text-blue-400 transition-colors">
+              About this data ↗
+            </Link>
+          </p>
           <p className="text-xs text-slate-700 font-mono">
             Built with Next.js · D3.js · Three.js · React Three Fiber · data from{' '}
             <span className="text-slate-500">NZQA Secondary School Statistics</span>
+          </p>
+          <p className="text-xs text-slate-700 font-mono pt-2">
+            <Link href="/data-sources" className="text-slate-600 hover:text-slate-400 transition-colors">
+              Data sources &amp; methodology →
+            </Link>
           </p>
         </footer>
 

@@ -7,14 +7,14 @@ Build a `/data-sources` page that documents every data source used across Mazmat
 
 | Step | Status | Description |
 |------|--------|-------------|
-| 1 | ⬜ todo | Build `/data-sources` page (Server Component, no interactivity) |
-| 2 | ⬜ todo | Add source links to `/nzqa-maths` chart captions |
-| 3 | ⬜ todo | Add source links to `/nzqa-scholarship` chart captions |
-| 4 | ⬜ todo | Add source links to `/primary-maths` chart captions |
-| 5 | ⬜ todo | Add nav card to home page (`/`) |
-| 6 | ⬜ todo | Add footer link to all pages |
-| 7 | ⬜ todo | Write e2e tests |
-| 8 | ⬜ todo | Run full test suite — all tests must pass |
+| 1 | ✅ done | Build `/data-sources` page (Server Component, no interactivity) |
+| 2 | ✅ done | Add source links to `/nzqa-maths` chart captions |
+| 3 | ✅ done | Add source links to `/nzqa-scholarship` chart captions |
+| 4 | ✅ done | Add source links to `/primary-maths` chart captions |
+| 5 | ✅ done | Add nav card to home page (`/`) |
+| 6 | ✅ done | Add footer link to all pages |
+| 7 | ✅ done | Write e2e tests |
+| 8 | ✅ done | Run full test suite — all tests must pass |
 
 Update this table as each step completes: ⬜ todo → 🔄 in progress → ✅ done
 
