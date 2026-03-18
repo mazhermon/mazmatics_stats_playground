@@ -279,8 +279,9 @@ export default function PrimaryMathsPage() {
             TIMSS data: IEA/TIMSS 2023 International Results report (timss2023.org). NZ Year 5 (Grade 4) scores 1995–2023.
           </p>
           <p className="text-xs text-slate-600 font-mono">
-            NMSSA data: National Monitoring Study of Student Achievement 2022, Report 30 — Mathematics.
+            NMSSA data: National Monitoring Study of Student Achievement — Report 19 (2018) and Report 30 (2022).
             University of Otago / NZCER on behalf of Ministry of Education.
+            2013 values reconstructed on the 2018 MS scale via linking exercise (NMSSA Report 19, Appendix 6).
             Sample: ~2,000 students per year level, English-medium state/integrated schools.
           </p>
           <p className="text-xs text-slate-600 font-mono">
@@ -291,7 +292,7 @@ export default function PrimaryMathsPage() {
             No per-school primary data is publicly available in NZ. All data is national sample-level only.
           </p>
           <p className="text-xs text-slate-700 font-mono">
-            Built with Next.js · D3.js · data from TIMSS 2023 · NMSSA 2022 · Curriculum Insights 2024
+            Built with Next.js · D3.js · data from TIMSS 2023 · NMSSA 2013/2018/2022 · Curriculum Insights 2024
           </p>
         </footer>
 

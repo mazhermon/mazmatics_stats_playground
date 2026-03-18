@@ -55,3 +55,36 @@ Full e2e coverage for `/primary-maths`:
 - `/nzqa-maths` — tests are flaky under heavy parallel load due to dev server constraints.
   Mitigated by adding proper `test.setTimeout(90000)` to all affected describe blocks.
   Not a production bug.
+
+---
+
+# Phase 13 Test Notes — 2026-03-18
+
+## Tests Added (Phase 13)
+
+### [x] src/__tests__/api/nmssa.test.ts (new — 20 unit tests)
+Covers: yearLevel validation (4/8/all/invalid), groupType validation (all allowed values + invalid),
+multi-year response shape, SQL generation (WHERE clause conditions), happy path, DB failure → 500.
+
+### [x] e2e/primary-maths.spec.ts — extended (+11 tests, now 40 total)
+- NMSSATrendChart describe block: section heading visible, Year 4/Year 8 toggle visible,
+  National/By ethnicity/By gender/By decile toggles visible, SVG renders, Year 4 switch,
+  By Ethnicity switch, Year 4 + By Ethnicity combined
+- NMSSATrendChart API describe block: returns all 3 years (2013/2018/2022), yearLevel+groupType filter
+- Fixed NMSSAEquityGaps "By gender" selector: `.last()` → `.nth(1)` (NMSSATrendChart added a 3rd instance)
+
+## Known Test Gaps (to add in a future phase)
+
+### [ ] Visual regression snapshot for /primary-maths
+No `*.visual.spec.ts` covers this page at all. The 5 existing visual snapshots are for other pages.
+**What to add:** `e2e/visual/primary-maths.visual.spec.ts` — snapshot the NMSSATrendChart section
+(scroll to "Three cycles of NMSSA", wait for SVG, snapshot).
+**Command to update:** `npx playwright test --config=playwright.visual.config.ts --update-snapshots`
+
+### [ ] Fix /nzqa-patterns networkidle timeout (pre-existing)
+`e2e/creative-pages.spec.ts` line 138: `waitForLoadState('networkidle')` with default 30s times out
+under parallel load. Fix: add `test.setTimeout(60000)` + `{ timeout: 45000 }` to the networkidle call.
+
+### [ ] Fix diagnostic timeline API 500 (pre-existing)
+`e2e/diagnostic.spec.ts` line 159: `/api/nzqa/timeline?metric=not_achieved_rate&groupBy=ethnicity&level=1`
+returns 500. Investigate whether this is a query bug or a data availability gap for that parameter combo.

@@ -253,11 +253,14 @@ Note: International averages are approximate from search results and may vary. N
 - Available at: `timss2023.org/wp-content/uploads/2024/11/`
 - **Build-ready: YES** — can seed DB directly
 
-**PRIORITY 2 — NMSSA 2022 (build-ready with PDF extraction):**
-- Complete mean scale scores by ethnicity, gender, decile for Year 4 and Year 8
-- Data extracted from PDF: Table A2.1 and A2.2
-- 2013 and 2018 data available from PDFs (partial — context data extracted, need full extraction)
-- **Build-ready: YES for 2022 data** — needs additional PDF extraction for 2013/2018 trend
+**PRIORITY 2 — NMSSA 2022/2018/2013 — COMPLETE (Phase 13):**
+- All 3 cycles now seeded in `primary.db` → `nmssa_maths` (60 rows)
+- 2022: from Report 30 Tables A2.1/A2.2
+- 2018: extracted from Report 19 Tables A1.1/A1.2 (PDF downloaded from S3)
+- 2013: back-calculated from 2018 linked-scale reconstruction (Report 19 Table 3.1 diffs)
+  - Note: 2013 CIs are approximated from 2018 standard errors (similar sample sizes ~2000/yr level)
+  - Note: 2013_NMSSA_MATHEMATICS.pdf URL returns AccessDenied — 2018 PDF contains the linked 2013 stats
+- NMSSATrendChart built and live on /primary-maths
 
 **PRIORITY 3 — Curriculum Insights 2023–2024 (build-ready for % data):**
 - % meeting provisional benchmarks for Year 3, 6, and 8
@@ -288,9 +291,9 @@ Step 2: NMSSA 2022 (immediate — data already extracted above)
   → Rows: (year, year_level, group_type, group_value, mean_score, ci_lower, ci_upper, sd, n)
   → 2022: Y4 and Y8, all group breakdowns above
 
-Step 3: NMSSA 2013 and 2018 (from S3 PDFs — run pdftotext)
-  → Same table schema
-  → PDFs available: 2018_NMSSA_MATHEMATICS.pdf (already downloaded), 2013 via search
+Step 3: NMSSA 2013 and 2018 — COMPLETE (Phase 13)
+  → nmssa_maths table now has 60 rows across 2013/2018/2022
+  → 2013 URL (nmssa-production S3) returns AccessDenied — use 2018 report Table 3.1 diffs to back-calculate
 
 Step 4: Curriculum Insights 2023–2024 (headline % data)
   → Seed: curriculum_insights_maths table

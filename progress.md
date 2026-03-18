@@ -68,6 +68,33 @@
 
 ---
 
+---
+
+## Phase 13 — NMSSA Trend Chart ✅ COMPLETE (2026-03-18)
+
+- [x] Extract 2018 NMSSA data from S3 PDF (Report 19, Tables A1.1/A1.2 via pdftotext)
+- [x] Back-calculate 2013 data from 2018 linked-scale reconstruction (Table 3.1 diffs)
+  - Note: `2013_NMSSA_MATHEMATICS.pdf` returns AccessDenied — 2018 PDF contains the linked 2013 stats
+  - 2013 CIs approximated from 2018 standard errors (similar sample sizes)
+- [x] Update `scripts/seed-primary.ts` + reseed: `nmssa_maths` now 60 rows (2013/2018/2022)
+- [x] Confirm `/api/primary/nmssa` route already handles multi-year (no year filter hardcoded)
+- [x] Build `src/components/charts/NMSSATrendChart.tsx`
+  - Connected dot/line chart, 95% CI error bars, Year 4/Year 8 toggle
+  - National / By ethnicity / By gender / By decile grouping
+  - End labels, Y8 decline annotation (2018→2022)
+- [x] Add section to `/primary-maths` page between NMSSAEquityGaps and CurriculumInsightsPipeline
+- [x] `src/__tests__/api/nmssa.test.ts` — 20 unit tests, all passing
+- [x] `e2e/primary-maths.spec.ts` — +11 e2e tests; fixed NMSSAEquityGaps "By gender" selector
+
+**Final result: 175 unit / 179 e2e passing (2 pre-existing unrelated failures)**
+
+### Remaining gaps logged in test-todo.md
+- Visual regression snapshot for /primary-maths NMSSATrendChart
+- Fix /nzqa-patterns networkidle timeout
+- Fix diagnostic timeline API 500
+
+---
+
 ## Ready for next session
 
 **Suggested next focus — choose one:**

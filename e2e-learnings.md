@@ -45,10 +45,15 @@ Note: `updateSnapshots: 'missing'` in visual config only adds new snapshots, doe
 
 ```
 npm run test:e2e    → playwright.config.ts → chromium only, no visual dir
-                      65 tests: landing, diagnostic, creative-pages, nzqa-maths (API + UI)
+                      181 tests (179 passing): landing, diagnostic, creative-pages,
+                      nzqa-maths, nzqa-scholarship, primary-maths, nzqa-creative etc.
+                      2 pre-existing failures: /nzqa-patterns timeout + timeline API 500
 
 npm run test:visual → playwright.visual.config.ts → chromium only, visual dir only
                       5 tests: snapshot regression for all 4 pages + home
+                      (no /primary-maths visual snapshot yet — see test-todo.md)
+
+npm test            → Jest: 175 unit tests, all passing
 ```
 
 ## Timeout Rules for /nzqa-maths
