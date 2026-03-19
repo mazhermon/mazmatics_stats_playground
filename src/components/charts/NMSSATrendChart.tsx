@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import * as d3 from 'd3';
+import { GenderNote } from './GenderNote';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -31,14 +32,14 @@ type GroupView = 'national' | 'ethnicity' | 'gender' | 'decile';
 const GROUP_COLOURS: Record<string, string> = {
   // national
   'National':    '#e2e8f0',
-  // ethnicity
-  'Māori':       '#f59e0b',
+  // ethnicity — Māori red is culturally significant in te ao Māori
+  'Māori':       '#E53E3E',
   'Pacific':     '#ef4444',
   'Asian':       '#10b981',
   'NZ European': '#60a5fa',
-  // gender
-  'Girls':       '#f472b6',
-  'Boys':        '#60a5fa',
+  // gender — purple for boys, yellow for girls
+  'Girls':       '#FFF73E',
+  'Boys':        '#BA90FF',
   // decile
   'Low':         '#ef4444',
   'Mid':         '#f59e0b',
@@ -344,6 +345,9 @@ export function NMSSATrendChart() {
           </div>
         )}
       </div>
+
+      {/* Gender note */}
+      {groupView === 'gender' && <GenderNote />}
 
       {/* Caption */}
       <div className="text-xs text-slate-500 font-mono space-y-0.5">

@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
 import { fmtRate, ETHNICITY_COLOURS, GENDER_COLOURS } from '@/lib/palette';
+import { GenderNote } from './GenderNote';
 
 type Qualification = 'NCEA Level 1' | 'NCEA Level 2' | 'NCEA Level 3' | 'University Entrance';
 type ViewMode = 'national' | 'ethnicity' | 'gender';
@@ -346,6 +347,7 @@ export function EndorsementTrendChart() {
           Gold band = Excellence endorsement · Purple band = Merit endorsement · Dark base = No endorsement (passed but unendorsed)
         </p>
       )}
+      {view === 'gender' && <GenderNote />}
     </div>
   );
 }

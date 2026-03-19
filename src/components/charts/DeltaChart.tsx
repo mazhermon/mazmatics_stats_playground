@@ -6,6 +6,7 @@ import { useNzqaData, type TimelineResponse, type TimelineGroupPoint } from '@/l
 import { ETHNICITY_COLOURS, EQUITY_COLOURS, GENDER_COLOURS, fmtRate } from '@/lib/palette';
 import { resumeAudio } from '@/lib/audio';
 import { strings } from '@/lib/nzqa-strings';
+import { GenderNote } from './GenderNote';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -263,6 +264,7 @@ export function DeltaChart() {
         </div>
       )}
 
+      {groupBy === 'gender' && <GenderNote />}
       <p className="text-xs text-slate-500 font-mono">{strings.dataNote}</p>
     </div>
   );

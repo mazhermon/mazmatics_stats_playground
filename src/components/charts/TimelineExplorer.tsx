@@ -4,6 +4,7 @@ import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import { useNzqaData, type TimelineResponse, type TimelineGroupPoint } from '@/lib/hooks/useNzqaData';
 import { LEVEL_COLOURS, ETHNICITY_COLOURS, EQUITY_COLOURS, GENDER_COLOURS, fmtRate } from '@/lib/palette';
+import { GenderNote } from './GenderNote';
 import { playHoverTone, playTransitionSweep, resumeAudio } from '@/lib/audio';
 import { strings } from '@/lib/nzqa-strings';
 
@@ -467,6 +468,7 @@ export function TimelineExplorer() {
         </div>
       )}
 
+      {groupBy === 'gender' && <GenderNote />}
       <p className="text-xs text-slate-500 font-mono">{strings.dataNote}</p>
     </div>
   );

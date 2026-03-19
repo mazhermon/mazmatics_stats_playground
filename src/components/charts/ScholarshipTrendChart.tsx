@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
 import { fmtRate, ETHNICITY_COLOURS, GENDER_COLOURS } from '@/lib/palette';
+import { GenderNote } from './GenderNote';
 
 type Subject = 'Calculus' | 'Statistics';
 type ViewMode = 'national' | 'ethnicity' | 'gender';
@@ -355,6 +356,7 @@ export function ScholarshipTrendChart() {
           Gold band = Outstanding award · Blue band = Scholarship award · Dark base = No Award
         </p>
       )}
+      {view === 'gender' && <GenderNote />}
     </div>
   );
 }

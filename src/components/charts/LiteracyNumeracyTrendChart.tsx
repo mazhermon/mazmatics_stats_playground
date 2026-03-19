@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
 import { fmtRate, ETHNICITY_COLOURS, GENDER_COLOURS } from '@/lib/palette';
+import { GenderNote } from './GenderNote';
 
 type AreaMode = 'both' | 'literacy' | 'numeracy';
 type YearLevel = 11 | 12 | 13;
@@ -404,6 +405,7 @@ export function LiteracyNumeracyTrendChart() {
         )}
       </div>
 
+      {view === 'gender' && <GenderNote />}
       <p className="text-xs text-slate-500 font-mono">
         Teal = Literacy · Amber = Numeracy · &ldquo;Current year&rdquo; = first-time passers this year · &ldquo;Cumulative&rdquo; = ever passed by this year level
       </p>

@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import * as d3 from 'd3';
+import { GenderNote } from './GenderNote';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -22,8 +23,8 @@ type GenderMode = 'national' | 'gender';
 const YEARS = [1995, 2003, 2007, 2011, 2015, 2019, 2023];
 const NZ_COLOUR   = '#BA90FF'; // violet
 const INTL_COLOUR = '#64748b'; // slate
-const GIRLS_COLOUR = '#f472b6'; // pink
-const BOYS_COLOUR  = '#60a5fa'; // blue
+const GIRLS_COLOUR = '#FFF73E'; // Mazmatics yellow
+const BOYS_COLOUR  = '#BA90FF'; // brand purple
 const AU_COLOUR    = '#10b981'; // emerald — comparison reference (approx, not in DB)
 const ENG_COLOUR   = '#f59e0b'; // amber
 
@@ -366,6 +367,9 @@ export function TIMSSTrendChart() {
           </div>
         )}
       </div>
+
+      {/* Gender note */}
+      {mode === 'gender' && <GenderNote />}
     </div>
   );
 }

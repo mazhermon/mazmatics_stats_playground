@@ -7,7 +7,7 @@
 // Colour-blind safe categorical palette for ethnicity groups
 // Based on Paul Tol's bright scheme (protanopia + deuteranopia safe)
 export const ETHNICITY_COLOURS: Record<string, string> = {
-  'Māori': '#EE6677',            // warm rose/red
+  'Māori': '#E53E3E',            // red — culturally significant in te ao Māori
   'Pacific Peoples': '#CCBB44',  // golden yellow
   'Asian': '#66CCEE',            // sky blue
   'European': '#4477AA',         // solid blue
@@ -33,11 +33,14 @@ export const EQUITY_COLOURS: Record<string, string> = {
   'Decile 8-10': '#4477AA',
 };
 
-// Gender colours
+// Gender colours — Boys/Male = brand purple, Girls/Female = Mazmatics yellow
+// Note: data records binary gender (boys/girls); see GenderNote component for acknowledgement
 export const GENDER_COLOURS: Record<string, string> = {
-  'Female': '#EE6677',
-  'Male': '#4477AA',
-  'Other': '#CCBB44',
+  'Female': '#FFF73E',   // Mazmatics yellow
+  'Girls':  '#FFF73E',   // alias for primary school data
+  'Male':   '#BA90FF',   // brand purple
+  'Boys':   '#BA90FF',   // alias for primary school data
+  'Other':  '#66CCEE',   // sky blue
 };
 
 // NCEA Level colours (brand-adjacent but distinguishable)
