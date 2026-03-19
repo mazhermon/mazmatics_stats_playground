@@ -199,3 +199,44 @@ Execute Phase 9: visit all new pages, click every filter, find all errors, fix t
 - **91 e2e tests, 0 failing**
 - `test-todo.md` written with all findings and resolution status
 - `/nzqa-stories`, `/nzqa-patterns`, `/nzqa-creative` — covered by existing `creative-pages.spec.ts` (23 tests); transient 404s under parallel load are dev server compile races, not bugs
+
+---
+
+## Session 7 — 2026-03-19: Phase 16 — Supabase Migration ✅ COMPLETE
+
+### Goal
+Fix 500 errors on live Vercel deployment caused by SQLite WAL files being incompatible with serverless. Migrate from `better-sqlite3` (SQLite) to Supabase Postgres.
+
+### Root Cause
+SQLite WAL mode writes machine-specific `-shm`/`-wal` files. When committed to git and deployed to Vercel, the WAL files from a different machine cause `SQLITE_CANTOPEN`. SQLite is fundamentally incompatible with serverless — the binary can't be reliably bundled, and file-based DBs don't work in ephemeral environments.
+
+### Solution
+Supabase Postgres via Vercel Marketplace integration. Using `postgres` npm package with `sql.unsafe(queryStr, params)` — minimal SQL rewrite (only positional params `$1`/`$2` instead of named `@param`).
+
+### Key files changed
+- `src/lib/db/index.ts` — rewritten with postgres client. Uses `MZMS__POSTGRES_URL_NON_POOLING` (port 5432, direct) preferred over `MZMS__POSTGRES_URL` (port 6543, PgBouncer — hangs in local dev)
+- `src/lib/db/primary.ts` — re-exports `getDb` as `getPrimaryDb`
+- All 10 API routes — async, `sql.unsafe()`, positional params
+- `next.config.ts` — removed `serverExternalPackages`, `outputFileTracingIncludes`
+- `src/data/schema.sql` — Postgres DDL for all 9 tables
+- `src/scripts/seed-supabase.ts` — one-time migration from local SQLite to Supabase
+- `.npmrc` — `legacy-peer-deps=true` for Vercel builds
+- `package.json` — `postgres` in deps, `better-sqlite3` in devDeps only
+
+### Test fixes
+- `@testing-library/dom` installed — fixed 2 pre-existing unit test suite failures → **175/175 unit tests**
+- `e2e/nzqa-maths.spec.ts` — updated for Supabase timing: `waitForSelector('svg path')` and `waitForSelector('path.region')` replace fixed delays; API tests get `test.setTimeout(90000)` → **36/36 e2e tests**
+
+### Seed setup (one-time, already done)
+1. `src/data/schema.sql` run in Supabase SQL editor
+2. `npm run seed:supabase` — all 9 tables seeded from local SQLite
+
+### Critical learnings
+- `MZMS__POSTGRES_URL` uses port 6543 (PgBouncer transaction mode) — hangs locally but works on Vercel. Always use `NON_POOLING` as preferred connection in the app
+- `dotenv/config` loads `.env` not `.env.local` — use `dotenv.config({ path: '.env.local' })` in scripts
+- Playwright `test.setTimeout()` in `beforeAll` hooks doesn't reliably extend hook timeout — just set it per-test
+- Selector-based waits (`waitForSelector`) are more reliable than fixed `waitForTimeout` when data loading time varies
+
+### Final State
+- **175/175 unit tests, 36/36 nzqa-maths e2e tests** — all passing
+- Branch `db-fixes` ready to merge to `master` and deploy to Vercel

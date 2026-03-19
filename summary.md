@@ -1,6 +1,40 @@
 # Session Summary
 
-## Current Project State (as of 2026-03-18, updated Phase 15)
+## Current Project State (as of 2026-03-19, updated Phase 16)
+
+### Phase 16 — Supabase Migration — COMPLETE (2026-03-19)
+
+**Goal:** Replace SQLite (`better-sqlite3`) with Supabase Postgres. App was returning 500 errors on Vercel due to SQLite WAL files and serverless incompatibility.
+
+**What changed:**
+- `postgres` npm package added; `better-sqlite3` moved to devDependencies (seed script only)
+- `src/lib/db/index.ts` — rewritten with postgres client; prefers `MZMS__POSTGRES_URL_NON_POOLING` (port 5432 direct) over `MZMS__POSTGRES_URL` (port 6543 PgBouncer — hangs in local dev)
+- `src/lib/db/primary.ts` — re-exports `getDb` as `getPrimaryDb`
+- All 10 API routes (7 NZQA + 3 primary) converted to async, `sql.unsafe(queryStr, params)`, positional `$1`/`$2` params
+- `next.config.ts` cleaned — removed `serverExternalPackages`, `outputFileTracingIncludes`
+- `src/data/schema.sql` — Postgres DDL for all 9 tables
+- `src/scripts/seed-supabase.ts` — reads local SQLite, bulk-inserts to Supabase in batches of 500
+- `.npmrc` — `legacy-peer-deps=true` for Vercel build compatibility
+- `.env.local.example` — documents all required env vars
+- Unit tests: all 5 test files updated to `mockUnsafe` pattern; `@testing-library/dom` installed fixing 2 pre-existing failures → **175/175 passing**
+- e2e tests: `nzqa-maths.spec.ts` updated for Supabase timing (selector-based waits, 90s timeouts) → **36/36 passing**
+
+**Env vars (set via Vercel Marketplace integration, pulled via `vercel env pull`):**
+- `MZMS__POSTGRES_URL_NON_POOLING` — direct connection (preferred, used by app + seed)
+- `MZMS__POSTGRES_URL` — PgBouncer pooled (fallback, works on Vercel production)
+- `MZMS__POSTGRES_URL` contains port 6543 — DO NOT use as primary in local dev (hangs)
+
+**One-time setup (already done):**
+1. `src/data/schema.sql` run in Supabase SQL editor ✅
+2. `npm run seed:supabase` run — all 9 tables populated ✅
+3. Data seeded from local SQLite files (`src/data/nzqa.db`, `src/data/primary.db`)
+
+**If DB needs to be re-seeded:** `npm run seed:supabase` (reads from local SQLite, truncates + re-inserts)
+**If Supabase project is paused (free tier):** See `restarting-the-db.md`
+
+**Branches:** all work on `db-fixes` branch, ready to merge to `master`
+
+---
 
 ### `/about` — About Page (Phase 15 — NEW)
 
