@@ -78,13 +78,16 @@ export default function Home() {
             <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               Mazmatics
             </span>{" "}
-            math stats playground
+            NZ school math stats playground
           </h1>
         </div>
 
         {/* Tagline */}
         <p className="text-xl md:text-2xl text-slate-300 leading-relaxed">
-          Explore mathematics through interactive visualizations
+          Explore Aotearoa/NZ school maths stats through interactive visualizations
+        </p>
+        <p>
+          How are things changing over time and with different groups? Try some of the links below to start exploring.
         </p>
 
         {/* Nav cards */}
