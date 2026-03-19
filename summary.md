@@ -341,9 +341,25 @@ GET /api/nzqa/scholarship
 
 ---
 
+### Colour Palette — current (updated Phase 17.5)
+
+| Group | Colour | Hex |
+|---|---|---|
+| Boys / Male | Brand purple | `#BA90FF` |
+| Girls / Female | Brand yellow | `#FFF73E` |
+| Māori | Red (culturally significant) | `#E53E3E` |
+| All Students | Brand purple | `#BA90FF` |
+| Pacific Peoples | Golden yellow | `#CCBB44` |
+| Asian | Sky blue | `#66CCEE` |
+| NZ European / Pākehā | Solid blue | `#4477AA` |
+
+GenderNote component (`src/components/charts/GenderNote.tsx`) renders a rainbow SVG + disclaimer on all charts when gender view is active.
+
+---
+
 ### What's Next (future sessions)
 
-**Phase 14 (current):** `/data-sources` page — document all 4 data sources with deep-link anchors. Add "About this data ↗" links from all chart pages. See `prompt.md` for full spec.
+**Phase 18 (next):** Social media videos — 5 × `.webm` Reels-style clips using Playwright video recording at 390×844 mobile viewport. Full spec in `prompt.md`. Run with `/ralph-loop --max-iterations 8 --completion-promise "SOCIAL_VIDEOS_COMPLETE"`.
 
 **Phase 15 onwards (Track B — remaining NZQA untapped tables):**
 - `/nzqa-endorsement` — `qualification_endorsement` table (Merit/Excellence for full NCEA qualifications)

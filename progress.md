@@ -153,3 +153,14 @@
 - [x] `tsc --noEmit` clean
 - [x] `npm run lint` clean
 - [x] `e2e/beta-banner.spec.ts` written — 2/2 smoke tests passing
+
+## Phase 17.5 — Gender Colour Scheme + GenderNote ✅ COMPLETE (2026-03-19)
+
+- [x] `src/lib/palette.ts` — `GENDER_COLOURS` updated: Boys/Male = `#BA90FF` (brand purple), Girls/Female = `#FFF73E` (brand yellow); added `Boys`/`Girls` aliases; Māori = `#E53E3E` (red, culturally significant in te ao Māori)
+- [x] `NMSSATrendChart.tsx` — hardcoded `GROUP_COLOURS` updated for Boys/Girls/Māori
+- [x] `NMSSAEquityGaps.tsx` — hardcoded `GROUP_COLOURS` updated for Boys/Girls/Māori
+- [x] `TIMSSTrendChart.tsx` — hardcoded `GIRLS_COLOUR`/`BOYS_COLOUR` updated
+- [x] `src/components/charts/GenderNote.tsx` — new component: 4-arc rainbow SVG + "Mazmatics acknowledges the infinite gender spectrum — this data records boys and girls only."
+- [x] `GenderNote` wired into 8 charts (only shown when gender view is active): TimelineExplorer, DeltaChart, ScholarshipTrendChart, LiteracyNumeracyTrendChart, EndorsementTrendChart, NMSSATrendChart, NMSSAEquityGaps, TIMSSTrendChart
+- [x] `tsc --noEmit` clean
+- [x] `npm run lint` clean
