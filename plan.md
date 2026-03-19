@@ -1,6 +1,24 @@
-# Current Status: Phase 16 COMPLETE — Supabase Migration
+# Current Status: Phase 17 IN PROGRESS — Beta Banner + Corner Badge
 
-**Phase 16 COMPLETE (2026-03-19):** SQLite → Supabase Postgres migration done. 167/167 unit tests pass, build clean.
+**Phase 16 COMPLETE (2026-03-19):** SQLite → Supabase Postgres migration done. 175/175 unit tests, 36/36 nzqa-maths e2e, build clean.
+
+## Phase 17 — Beta Banner + Corner Badge (IN PROGRESS)
+
+**Goal:** Add a persistent beta disclaimer banner to every page and a corner ribbon badge. Pure UI — no data or API changes.
+
+**Components to build:**
+- `src/components/layout/BetaBanner.tsx` — full-width amber strip, `#FFF73E` accent, NZ English disclaimer copy, Server Component
+- `src/components/layout/BetaBadge.tsx` — fixed top-right corner CSS ribbon, Mazmatics gradient, "BETA" text, Server Component
+- Update `src/app/layout.tsx` to include both
+
+**Design decisions:**
+- Banner: `bg-amber-950/60 border-b border-amber-800/40`, 3px `#FFF73E` left accent bar, `font-mono` "Early beta" label, warning triangle inline SVG
+- Badge: `fixed top-0 right-0`, 80×80px clipped corner, gradient fill, rotated "BETA" text
+- No dismiss button — persistent
+- `aria-hidden` on badge (decorative), `aria-label="Beta notice"` on banner
+- Copy: warm NZ English — "Early beta — we're still checking the data and finding the best ways to show it. Take everything as a useful starting point, not the final word."
+
+**Tests:** `e2e/beta-banner.spec.ts` — 2 smoke tests (banner text visible, badge in DOM)
 
 ## Phase 16 — Supabase Migration ✅ COMPLETE
 

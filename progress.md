@@ -141,6 +141,15 @@
 - [x] Docs updated
 
 **Manual steps remaining for Maz:**
-- [ ] Run `src/data/schema.sql` in Supabase SQL editor
-- [ ] Run `npm run seed:supabase` to populate Supabase from local SQLite
-- [ ] Verify deployed charts load correctly on Vercel
+- [x] Run `src/data/schema.sql` in Supabase SQL editor
+- [x] Run `npm run seed:supabase` to populate Supabase from local SQLite
+- [ ] Verify deployed charts load correctly on Vercel (deploy after Phase 17)
+
+## Phase 17 — Beta Banner + Corner Badge ✅ COMPLETE (2026-03-19)
+
+- [x] `src/components/layout/BetaBanner.tsx` — amber strip, yellow accent, NZ English copy
+- [x] `src/components/layout/BetaBadge.tsx` — fixed corner CSS ribbon, Mazmatics gradient
+- [x] `src/app/layout.tsx` updated — both components added to root layout
+- [x] `tsc --noEmit` clean
+- [x] `npm run lint` clean
+- [x] `e2e/beta-banner.spec.ts` written — 2/2 smoke tests passing
