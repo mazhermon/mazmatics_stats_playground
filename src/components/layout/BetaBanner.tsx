@@ -6,7 +6,7 @@ export function BetaBanner() {
   return (
     <aside
       aria-label="Beta notice"
-      className="w-full bg-amber-950/60 border-b border-amber-800/40"
+      className="sticky top-0 z-40 w-full bg-amber-950/80 backdrop-blur-sm border-b border-amber-800/40"
       style={{ borderLeft: '3px solid #FFF73E' }}
     >
       <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-start gap-2.5 sm:items-center">
