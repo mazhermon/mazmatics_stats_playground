@@ -47,6 +47,7 @@
     "out",
     "build",
     "dist",
-    "coverage"
+    "coverage",
+    "remotion"
   ]
 }
