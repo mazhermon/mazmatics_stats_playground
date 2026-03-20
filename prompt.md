@@ -1,178 +1,197 @@
-# Task: Phase 18 — Social Media Videos
+# Task: Remotion — "What is Mazmatics NZ Stats Explorer" Video
 
 ## Context
 
-Create short Instagram Reels-style video clips of the Mazmatics Stats site's best interactive charts at mobile size. Each clip shows real chart interactions (toggling between ethnicity, gender, decile breakdowns) to demonstrate the dynamic nature of the data explorer. The goal: recruit beta testers by showing what the site can do.
+Create a short promotional video using Remotion that explains what the Mazmatics NZ Stats Explorer is. This video embeds real clips from the landscape-recorded MP4 videos (`e2e/social-videos/landscape/`) to show the interactive charts in action.
 
-**Approach:** Playwright built-in video recording (`.webm` output — no ffmpeg required). Record at 390×844 (iPhone 14 Pro viewport). Each video is a scripted Playwright interaction sequence. Deliverables: `.webm` files in `e2e/social-videos/` + `socialpost.md` with Instagram post copy for each clip.
+**Read before starting:**
+- `CLAUDE.md` — project conventions
+- `brand.md` — brand colours, fonts, tone
+- `.claude/skills/remotion` — Remotion framework patterns
 
-**Before starting:** Read `CLAUDE.md`. Check that the dev server is running on `localhost:3000`.
-
----
-
-## Videos to Create
-
-Create a Playwright script `scripts/record-social-videos.ts` (run with `npx ts-node scripts/record-social-videos.ts`) that records 5 videos. Each video should be 15–30 seconds.
-
-### Video 1 — "How NZ Kids Compare to the World" (TIMSS)
-
-**Page:** `/primary-maths` → TIMSS World Ranking section
-**Viewport:** 390×844
-**Interaction sequence:**
-1. Navigate to `/primary-maths`
-2. Scroll down to the TIMSS World Ranking chart (scroll ~1500px)
-3. Wait 3s for chart to render (NZ highlighted in amber)
-4. Scroll slowly up to TIMSS Trend Chart section
-5. Wait 3s — NZ trend line visible, 1995–2023
-6. Hold 4s to let the story sink in
-
-**Story:** NZ was top-10 in 1995. We've slipped. Here's the data.
+**Dev server:** Assumed running on `localhost:3001` (or 3000 — check CLAUDE.md / prior context).
 
 ---
 
-### Video 2 — "The Gap That Shouldn't Exist" (NMSSA Equity)
+## Story & Narrative
 
-**Page:** `/primary-maths` → NMSSA Equity Gaps section
-**Interaction sequence:**
-1. Navigate to `/primary-maths`
-2. Scroll to NMSSAEquityGaps chart (~2500px)
-3. Wait 3s — "By ethnicity" shown by default (Year 4 vs Year 8)
-4. Click "Gender" button — chart animates to gender breakdown
-5. Wait 2s
-6. Click "Decile" button — chart animates to decile breakdown
-7. Wait 3s
-8. Scroll to NMSSA Trend Chart
-9. Wait 4s — show the trend lines declining
+The video tells this story, beat by beat:
 
-**Story:** It's not just one group. The gaps show up across ethnicity, gender, and school decile.
+1. **Title hook** — "What is Mazmatics NZ Stats Explorer?"
+2. **The book** — "Mazmatics is a kids maths book — Fun Math for Kids"
+3. **This is something else** — "But this site? It's a different kind of project."
+4. **The data** — Show 2–3 chart clips: filter interactions, data changing, real NZ school data moving
+5. **The human behind it** — "Built by a curious dad of 2 primary school kids — an outsider project, just like the book."
+6. **CTA** — "Explore NZ school maths data at mazmatics.com"
+
+**Tone:** Warm, accessible NZ English. Conversational. Not corporate. Not academic. Like a mate explaining something they're passionate about. Use NZ English (maths not math, colour not color, recognise not recognize).
 
 ---
 
-### Video 3 — "Year 8: Going Backwards" (NMSSA Trend)
+## Technical Specs
 
-**Page:** `/primary-maths` → NMSSA Trend Chart section
-**Interaction sequence:**
-1. Navigate to `/primary-maths`
-2. Scroll to NMSSATrendChart section (~3200px)
-3. Wait 3s — National trend visible, Y4 tab selected
-4. Click "Year 8" tab
-5. Wait 2s — Y8 decline from 2018→2022 highlighted
-6. Click "By ethnicity" tab (if available)
-7. Wait 3s — ethnicity lines diverging
-8. Scroll up slightly to frame the chart
-9. Hold 4s
+### Two Compositions
 
-**Story:** Year 8 national scores dropped from 2018 to 2022. Some groups more than others.
+**1. Instagram Reels (Primary)**
+- ID: `MazmaticsInstagram`
+- Dimensions: 1080 × 1920 (9:16 portrait)
+- FPS: 30
+- Duration: ~20–25 seconds (600–750 frames)
 
----
+**2. LinkedIn (Secondary)**
+- ID: `MazmaticsLinkedIn`
+- Dimensions: 1920 × 1080 (16:9 landscape)
+- FPS: 30
+- Duration: ~20–25 seconds (600–750 frames)
 
-### Video 4 — "NZCEA: Not All Students Reach the Line" (NZQA Timeline)
-
-**Page:** `/nzqa-maths` → TimelineExplorer section
-**Interaction sequence:**
-1. Navigate to `/nzqa-maths`
-2. Wait for page to load (waitForSelector `h1`, then 8s settle time)
-3. Scroll to TimelineExplorer section (~1800px)
-4. Wait 3s — default metric visible (national trend)
-5. Click "Ethnicity" group button (if visible in groupBy selector)
-6. Wait 3s — multiple ethnicity lines appear
-7. Click "Gender" group button
-8. Wait 2s — gender split visible
-9. Hold 4s
-
-**Story:** NCEA maths achievement over time. Toggle by ethnicity and gender — the gaps are consistent.
+Both: **Silent** (no audio — music added later in CapCut/DaVinci). No voiceover.
 
 ---
 
-### Video 5 — "Where in NZ?" (Regional Map)
+## Brand Styling
 
-**Page:** `/nzqa-maths` → Regional Map section
-**Interaction sequence:**
-1. Navigate to `/nzqa-maths`
-2. Wait for page load + 8s settle
-3. Scroll to RegionalMap section (~3500px)
-4. Wait for `path.region` to be present
-5. Wait 3s — NZ regions coloured by achievement rate
-6. Hover over Auckland region (approximately x:195, y:400)
-7. Wait 2s — tooltip shown
-8. Hover over Northland (approximately x:195, y:330)
-9. Wait 2s
-10. Hover over Canterbury (approximately x:195, y:600)
-11. Wait 3s
-12. Hold 2s
+Apply the Mazmatics brand faithfully:
 
-**Story:** Achievement rates differ across New Zealand regions. Hover to explore.
+- **Background:** Deep slate/charcoal (`#0f172a` — slate-950)
+- **Text:** Off-white (`#f1f5f9` — slate-100) for body, white `#fff` for headings
+- **Gradient** (for title text and section headings): `linear-gradient(to left, #BA90FF, #47A5F1)` — applied via SVG linearGradient or CSS gradient-clip effect
+- **Accent colour:** `#BA90FF` (Light Purple) for highlights, labels
+- **Secondary accent:** `#47A5F1` (Sky Blue)
+- **CTA highlight:** `#FFF73E` (Mazmatics Yellow) — use sparingly, for the CTA beat
+- **Font — Headings:** Geist Sans (load via @remotion/google-fonts or embed)
+- **Font — Data/Mono:** Geist Mono
+- **Font — Wordmark only:** `Bungee Shade` (the MAZMATICS wordmark) — load via Google Fonts
+- **Decorative offset shadow** (on key callout cards): `box-shadow: #BA90FF 8px 8px 0px, #47A5F1 -8px -8px 0px`
+- **Subtle graph-paper grid** as background texture (faint lines — a nod to the maths exercise book feeling)
 
 ---
 
-## Implementation Details
+## Video Clips to Embed
 
-### Playwright Video Config
+Use `<Video>` from Remotion to embed clips from `e2e/social-videos/landscape/`. These are the landscape MP4 files recorded at 1024×768.
 
-```ts
-const browser = await chromium.launch();
-const context = await browser.newContext({
-  viewport: { width: 390, height: 844 },
-  deviceScaleFactor: 2, // retina
-  recordVideo: {
-    dir: 'e2e/social-videos/',
-    size: { width: 390, height: 844 },
-  },
-});
+Preferred clips to use (pick the most visually striking moments):
+- `landscape-video-4-nzqa-timeline.mp4` — shows timeline toggling between ethnicity groups
+- `landscape-video-2-nmssa-equity.mp4` — shows equity gap chart toggling by ethnicity/gender/decile
+- `landscape-video-5-regional-map.mp4` — shows NZ map with regional hover tooltips
+- `landscape-video-1-timss-world.mp4` — shows NZ in international TIMSS rankings
+
+Trim each clip to its best 3–5 seconds using Remotion's `startFrom` and `endAt` props on `<Video>`.
+
+---
+
+## Scene Breakdown
+
+### Scene 1: Title Hook (0–3s, frames 0–90)
+- Background: dark slate with faint graph-paper grid
+- Large bold heading (gradient text): "NZ Stats Explorer"
+- Subheading: "Interactive NZ school maths data"
+- Mazmatics wordmark (Bungee Shade) fades in at bottom
+- Fade in from black
+
+### Scene 2: The Book (3–6s, frames 90–180)
+- Text: "Mazmatics is a kids maths book"
+- Subtext: "Fun Math for Kids — designed for home play"
+- Simple, warm. Maybe a purple accent card with offset shadow.
+- Animate in from below
+
+### Scene 3: But This... (6–9s, frames 180–270)
+- Text: "This site is something else."
+- Subtext: "An explorer for the real data behind NZ school maths"
+- Text slides in from right
+- Slight pause
+
+### Scene 4: Chart Clips (9–18s, frames 270–540)
+- Show 2–3 embedded video clips in sequence
+- Each clip: 3–4 seconds, fills most of the frame
+- Label overlay at bottom: e.g. "NCEA Maths Achievement — by ethnicity" in Geist Mono, small, `#BA90FF`
+- Clips fade in and out — no hard cuts
+
+### Scene 5: The Human (18–22s, frames 540–660)
+- Text: "Built by a curious dad of 2 primary school kids"
+- Subtext: "An outsider project — just like the book."
+- Warm, slightly smaller text. Personal.
+- Subtle fade in
+
+### Scene 6: CTA (22–25s, frames 660–750)
+- Yellow background section (`#FFF73E`) or yellow text on dark
+- Large text: "Explore the data"
+- URL: "mazmatics.com"
+- Mazmatics wordmark (Bungee Shade)
+- Fade to black at end
+
+---
+
+## Project Structure
+
+Create a Remotion project in `remotion/` at the project root:
+
+```
+remotion/
+├── package.json          (Remotion-specific dependencies)
+├── remotion.config.ts    (Remotion config)
+├── src/
+│   ├── index.ts          (entry point — registers compositions)
+│   ├── Root.tsx          (composition registry)
+│   ├── compositions/
+│   │   ├── Instagram.tsx (9:16 portrait composition)
+│   │   └── LinkedIn.tsx  (16:9 landscape composition)
+│   ├── scenes/
+│   │   ├── TitleScene.tsx
+│   │   ├── BookScene.tsx
+│   │   ├── TransitionScene.tsx
+│   │   ├── ChartClipsScene.tsx
+│   │   ├── HumanScene.tsx
+│   │   └── CTAScene.tsx
+│   └── components/
+│       ├── GradientText.tsx   (gradient-clip text helper)
+│       ├── GraphPaperBg.tsx   (faint grid background)
+│       └── ClipPlayer.tsx     (video clip with label overlay)
 ```
 
-### Output
-
-Save videos as:
-- `e2e/social-videos/video-1-timss-world.webm`
-- `e2e/social-videos/video-2-nmssa-equity.webm`
-- `e2e/social-videos/video-3-nmssa-trend.webm`
-- `e2e/social-videos/video-4-nzqa-timeline.webm`
-- `e2e/social-videos/video-5-regional-map.webm`
-
-After `context.close()`, Playwright finalises the `.webm` file. Rename the auto-generated hash file to the correct name using `fs.renameSync`.
-
-### Package.json script
-
-Add: `"record:social": "npx ts-node --project tsconfig.node.json scripts/record-social-videos.ts"`
-
 ---
 
-## socialpost.md
+## Installation
 
-Create `socialpost.md` at the project root with 5 entries, one per video. Each entry:
+Install Remotion inside the `remotion/` subdirectory (NOT in the root Next.js project — keep dependencies isolated):
 
-```markdown
-## Video N — [Title]
-
-**File:** `e2e/social-videos/video-N-name.webm`
-**Duration:** ~20s
-**Text overlay suggestion:** (what to add in CapCut or DaVinci before posting)
-
-**Instagram caption:**
-[2–4 lines of NZ English copy, conversational, data-forward]
-[Hashtags: #NZEducation #MathsNZ #OpenData #BetaTester #Mazmatics]
-
-**CTA:** "Link in bio to explore the data yourself — we're in early beta and want your feedback 🙌"
+```bash
+cd remotion
+npm init -y
+npm install remotion @remotion/cli
 ```
+
+Add a convenience script to the ROOT `package.json`:
+```json
+"remotion:preview": "cd remotion && npx remotion preview src/index.ts",
+"remotion:render:instagram": "cd remotion && npx remotion render src/index.ts MazmaticsInstagram --output ../e2e/social-videos/remotion/mazmatics-instagram.mp4",
+"remotion:render:linkedin": "cd remotion && npx remotion render src/index.ts MazmaticsLinkedIn --output ../e2e/social-videos/remotion/mazmatics-linkedin.mp4"
+```
+
+Output directory: `e2e/social-videos/remotion/` — create this directory.
 
 ---
 
 ## Acceptance Criteria
 
-- [ ] `scripts/record-social-videos.ts` exists and is runnable
-- [ ] `npm run record:social` is added to `package.json`
-- [ ] 5 `.webm` files generated in `e2e/social-videos/` when script runs against live dev server
-- [ ] Each video is 15–30 seconds long
-- [ ] Videos recorded at 390×844 (mobile viewport)
-- [ ] `socialpost.md` exists with 5 entries, one per video
-- [ ] Each `socialpost.md` entry has: file path, text overlay suggestion, Instagram caption, CTA
-- [ ] Script exits cleanly (no hanging processes)
-- [ ] `tsc --noEmit` clean
-- [ ] `npm run lint` clean
+- [ ] `remotion/` directory exists with valid Remotion project
+- [ ] `remotion/src/Root.tsx` registers both `MazmaticsInstagram` and `MazmaticsLinkedIn` compositions
+- [ ] All 6 scenes are implemented in separate scene components
+- [ ] Video clips from `e2e/social-videos/landscape/` are embedded using `<Video>` with `startFrom`/`endAt` trimming
+- [ ] Brand colours (`#8C5FD5`, `#BA90FF`, `#47A5F1`, `#FFF73E`) applied correctly
+- [ ] Gradient text applied to title and section headings
+- [ ] Graph-paper grid background rendered in `GraphPaperBg.tsx`
+- [ ] Bungee Shade font used for Mazmatics wordmark
+- [ ] Geist Sans used for headings and body; Geist Mono for data labels
+- [ ] All text is NZ English (maths, colour, recognise, etc.)
+- [ ] `remotion:preview` script added to root `package.json`
+- [ ] `remotion:render:instagram` and `remotion:render:linkedin` scripts added to root `package.json`
+- [ ] `e2e/social-videos/remotion/` directory created
+- [ ] TypeScript compiles cleanly inside `remotion/` (`npx tsc --noEmit`)
+- [ ] Compositions run without errors in preview (`npx remotion preview` shows video in browser)
 
 ## Completion Promise
 
 When all acceptance criteria are met, output the exact text:
 
-<promise>SOCIAL_VIDEOS_COMPLETE</promise>
+<promise>REMOTION_VIDEO_COMPLETE</promise>

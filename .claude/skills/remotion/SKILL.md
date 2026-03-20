@@ -1,6 +1,6 @@
 ---
 name: remotion
-description: Remotion framework best practices for programmatic video generation. Covers composition structure, animation timing, audio/video handling, and data-driven video creation.
+description: Remotion framework best practices for programmatic video generation. Covers composition structure, animation timing, audio/video handling, data-driven video creation, and assembling promo videos from Playwright screen recordings (startFrom timing, objectFit, clip selection).
 version: 1.0.0
 stacks:
   - Remotion
@@ -505,3 +505,187 @@ registerFont({
 - Render time acceptable (profile with `--concurrency`)
 - All props properly typed and documented
 - Error boundaries for data-loaded content
+
+---
+
+## Assembling Promo Videos from Playwright Screen Recordings
+
+This section documents hard-won lessons from building the Mazmatics social video (March 2026).
+The pattern: embed Playwright-recorded MP4 clips of an interactive app into a Remotion promo video.
+
+### Project Setup: Isolated Remotion Package
+
+Keep Remotion in its own `remotion/` subdirectory with its own `package.json` and `node_modules`.
+Do NOT install Remotion into the root Next.js project — it will conflict.
+
+```
+project-root/
+├── package.json          ← add remotion:preview / remotion:render:* convenience scripts here
+├── remotion/
+│   ├── package.json      ← remotion deps live here
+│   ├── remotion.config.ts
+│   ├── tsconfig.json
+│   └── src/
+└── e2e/social-videos/
+    ├── landscape/        ← Playwright-recorded source clips (MP4)
+    └── remotion/         ← rendered output goes here
+```
+
+Root `package.json` convenience scripts:
+```json
+"remotion:preview": "cd remotion && npx remotion preview src/index.ts",
+"remotion:render:instagram": "cd remotion && npx remotion render src/index.ts MazmaticsInstagram --output ../e2e/social-videos/remotion/mazmatics-instagram.mp4"
+```
+
+### Serving Source Videos via publicDir + Symlink
+
+Remotion's `staticFile()` serves files from `./public/` by default. The landscape clips live
+in `e2e/social-videos/landscape/` — avoid copying large MP4s. Instead, symlink:
+
+```bash
+# Run once from the project root:
+ln -sf ../../e2e/social-videos/landscape remotion/public/videos
+# Note the relative path is from remotion/public/, not the project root — get this right.
+# remotion/public/ → ../../ → project root → e2e/social-videos/landscape ✓
+```
+
+`remotion.config.ts`:
+```ts
+import { Config } from "@remotion/cli/config";
+Config.setPublicDir("./public");
+```
+
+Then in components:
+```tsx
+import { staticFile } from 'remotion';
+<Video src={staticFile('videos/video-4-nzqa-timeline.mp4')} startFrom={390} />
+```
+
+### CRITICAL: startFrom Values — Skip Past Page Load Dead Time
+
+**The biggest mistake when embedding screen recordings: using small `startFrom` values.**
+
+Playwright recordings always start with dead time: page load, navigation, scrolling, waiting
+for charts to render. The interesting content (filter clicks, chart animations, data changing)
+doesn't begin until 8–17 seconds into each recording.
+
+**Wrong:** `startFrom={45}` (1.5s in — still loading)
+**Right:** `startFrom={390}` (13s in — filter interactions underway)
+
+#### How to calculate startFrom
+
+1. **Read the recording script** (e.g. `scripts/record-social-videos-landscape.ts`)
+2. **Add up the dead time** for each video:
+   - `goToAndWait()` settle time (e.g. 8000ms for NZQA pages, 3000ms for primary)
+   - `smoothScrollTo()` + wait (typically 2000–3000ms per scroll)
+   - `waitForSvgData()` / `waitForButtonText()` (typically 3–8s in practice)
+   - Any `waitForTimeout()` before the first filter click
+3. **Multiply by source fps (~28fps)** — Playwright webm recordings are ~25–30fps variable,
+   converted to MP4 by ffmpeg. Use 28 as a safe estimate.
+
+```
+startFrom = (load_settle_s + scroll_s + data_wait_s) × 28
+```
+
+**Reference timings for this project's recordings (at ~28fps):**
+
+| Video | Dead time | startFrom |
+|---|---|---|
+| primary-maths pages (3s settle) | ~10–12s | 270–330 |
+| nzqa-maths pages (8–10s settle) | ~13–17s | 360–480 |
+| video-2 nmssa-equity | ~10s | 270 |
+| video-4 nzqa-timeline | ~14s | 390 |
+| video-6 fail-rate-ethnicity | ~15s | 420 |
+| video-7 merit-excellence | ~17s | 450 |
+| video-8 gender-gap | ~11s | 300 |
+| video-11 year4-vs-year8 | ~10s | 270 |
+
+If the clip still shows a blank/loading page, increase `startFrom` by 60–90 (2–3s).
+
+### Clip Duration: 4s (120 frames) is the Minimum for Filter Interactions
+
+3 seconds (90 frames) is not enough time to see:
+- A filter button clicked
+- The chart transition animation
+- The new data settled
+
+**Use 4s (120 frames) per clip** when showing filter/toggle interactions.
+Use 3s (90 frames) only for static or slowly-changing visuals (maps, 3D scene).
+
+### objectFit: contain, Not cover
+
+Source recordings are 1024×768 (4:3). The Remotion canvas is either 1080×1920 (portrait)
+or 1920×1080 (landscape). These aspect ratios don't match.
+
+**Wrong:** `objectFit: 'cover'` — crops heavily, makes chart content illegible.
+**Right:** `objectFit: 'contain'` inside a padded card — shows the full recording.
+
+```tsx
+// ClipPlayer pattern that works
+<AbsoluteFill>
+  <GraphPaperBg />  {/* branded background shows around the card */}
+  <AbsoluteFill style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: isPortrait ? '100px 48px 160px' : '60px 120px 100px', flexDirection: 'column', gap: 32 }}>
+    <div style={{ flex: 1, width: '100%', borderRadius: 16, overflow: 'hidden',
+      boxShadow: '0 0 80px rgba(186,144,255,0.25)', border: '1.5px solid rgba(186,144,255,0.3)' }}>
+      <Video src={staticFile(src)} startFrom={startFrom}
+        style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0a1628' }} />
+    </div>
+    <div style={{ fontFamily: '"Geist Mono"', color: '#BA90FF', textTransform: 'uppercase' }}>
+      {label}
+    </div>
+  </AbsoluteFill>
+</AbsoluteFill>
+```
+
+### Clip Selection: Prioritise Filter Interactions Over Visual Spectacle
+
+When the goal is showing an interactive data app:
+
+**Good clips** — filter toggles that change line graphs:
+- Videos where `clickFilterBtn(by ethnicity/gender/decile)` is called in the recording script
+- These produce clear before/after chart transitions that read well at small size
+
+**Less useful clips** (unless the 3D/map IS the point):
+- 3D scene rotation (video-10) — looks cool but shows no data insight
+- Regional map hovering (video-5) — very subtle, hard to read scaled down
+- Comparison heatmap (video-15) — needs high `startFrom` to skip past load
+
+**Best clips for filter interaction demos (this project):**
+
+| Video | What it shows | Why it works |
+|---|---|---|
+| video-8-gender-gap | gender filter on TIMSS + NMSSA | Immediate, visible line change |
+| video-2-nmssa-equity | ethnicity → gender → decile | 3 clear filter switches |
+| video-4-nzqa-timeline | by ethnicity → by gender | Multi-line chart reconfigures |
+| video-6-fail-rate-ethnicity | fail rate, Māori/non filter | Bold gap visible at small size |
+| video-7-merit-excellence | national → ethnicity → equity | Shows multiple breakdowns |
+| video-11-year4-vs-year8 | year 4/8 toggle + ethnicity | Simple toggle, clear change |
+
+### Iterative Rendering: Use Versioned Output Filenames
+
+Never overwrite the previous render while iterating. Use a version suffix:
+
+```
+mazmatics-instagram-v1.mp4  ← original
+mazmatics-instagram-v2.mp4  ← objectFit fix
+mazmatics-instagram-v3.mp4  ← more clips
+mazmatics-instagram-v4.mp4  ← correct startFrom timing ← KEEPER
+```
+
+This lets you compare versions and roll back without re-rendering.
+
+### Scene Timing Template (Mazmatics Promo)
+
+```
+Scene 1: Title hook        0–90    (3s)
+Scene 2: Context/story     90–180  (3s)
+Scene 3: Pivot/tension     180–270 (3s)
+Scene 4: Chart clips       270–990 (24s — 6 clips × 120 frames)
+Scene 5: Human/personal    990–1110 (4s)
+Scene 6: CTA               1110–1200 (3s)
+Total: 1200 frames = 40s @ 30fps
+```
+
+Adjust chart section length by changing `CLIP_DURATION` and number of clips.
+Update `durationInFrames` in `Root.tsx`, both composition files, and the chart Sequence.

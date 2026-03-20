@@ -261,7 +261,7 @@ Each NZQA CSV breakdown is single-dimensional. No row has two non-null dimension
 This project includes Claude Code skills in `.claude/skills/`:
 - **ui-ux-pro-max** — Design intelligence (palettes, fonts, patterns)
 - **frontend-design** — Anti-AI-slop frontend design principles
-- **remotion** — Programmatic video creation with React
+- **remotion** — Programmatic video creation with React; includes full guide for assembling promo videos from Playwright screen recordings (READ BEFORE any Remotion video work — covers startFrom timing, objectFit, clip selection, project setup)
 - **code-reviewer** — Security, performance, and quality review
 - **d3-visualization** — D3.js v7 best practices for React (includes stacked bar, delta chart, series toggle, annotation lines, Playwright testing patterns)
 - **threejs-viz** — Three.js / React Three Fiber patterns

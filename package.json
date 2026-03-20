@@ -11,7 +11,13 @@
     "test:watch": "jest --watch",
     "test:e2e": "playwright test",
     "test:visual": "playwright test --config=playwright.visual.config.ts",
-    "seed:supabase": "npx tsx src/scripts/seed-supabase.ts"
+    "seed:supabase": "npx tsx src/scripts/seed-supabase.ts",
+    "record:social": "npx ts-node --project tsconfig.node.json scripts/record-social-videos.ts",
+    "record:social2": "npx ts-node --project tsconfig.node.json scripts/record-social-videos-2.ts",
+    "record:social:landscape": "npx ts-node --project tsconfig.node.json scripts/record-social-videos-landscape.ts",
+    "remotion:preview": "cd remotion && npx remotion preview src/index.ts",
+    "remotion:render:instagram": "cd remotion && npx remotion render src/index.ts MazmaticsInstagram --output ../e2e/social-videos/remotion/mazmatics-instagram.mp4",
+    "remotion:render:linkedin": "cd remotion && npx remotion render src/index.ts MazmaticsLinkedIn --output ../e2e/social-videos/remotion/mazmatics-linkedin.mp4"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.7",
@@ -34,6 +40,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/d3": "7.4.0",
+    "@types/fluent-ffmpeg": "^2.1.28",
     "@types/jest": "29.5.11",
     "@types/node": "20.11.0",
     "@types/react": "19.0.0",
@@ -44,6 +51,8 @@
     "dotenv": "^17.3.1",
     "eslint": "8.56.0",
     "eslint-config-next": "15.0.0",
+    "ffmpeg-static": "^5.3.0",
+    "fluent-ffmpeg": "^2.1.3",
     "identity-obj-proxy": "3.0.0",
     "jest": "29.7.0",
     "jest-environment-jsdom": "29.7.0",

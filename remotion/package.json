@@ -1,0 +1,21 @@
+{
+  "name": "mazmatics-video",
+  "version": "1.0.0",
+  "description": "Remotion video for Mazmatics NZ Stats Explorer",
+  "scripts": {
+    "preview": "npx remotion preview src/index.ts",
+    "render:instagram": "npx remotion render src/index.ts MazmaticsInstagram --output ../e2e/social-videos/remotion/mazmatics-instagram.mp4",
+    "render:linkedin": "npx remotion render src/index.ts MazmaticsLinkedIn --output ../e2e/social-videos/remotion/mazmatics-linkedin.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.0.0"
+  }
+}

@@ -50,3 +50,7 @@ src/data/*.db-shm
 src/data/*.db-wal
 src/data/*.db-journal
 .vercel
+
+
+#large files
+/social-videos
