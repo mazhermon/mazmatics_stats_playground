@@ -24,7 +24,7 @@ test.describe('Data Sources page', () => {
     await page.waitForSelector('h1', { timeout: 10000 });
 
     // Use h2 selector to avoid strict-mode violation (section containers also contain the text)
-    await expect(page.locator('h2').filter({ hasText: 'NZQA Secondary School Statistics' })).toBeVisible();
+    await expect(page.locator('h2').filter({ hasText: 'NZQA Subject Attainment Statistics' })).toBeVisible();
     await expect(page.locator('h2').filter({ hasText: 'TIMSS International Maths Study' })).toBeVisible();
     await expect(page.locator('h2').filter({ hasText: 'NMSSA Maths Achievement Reports' })).toBeVisible();
     await expect(page.locator('h2').filter({ hasText: 'Curriculum Insights Dashboard' })).toBeVisible();
@@ -34,7 +34,7 @@ test.describe('Data Sources page', () => {
     await page.goto('/data-sources');
     await page.waitForSelector('h1', { timeout: 10000 });
 
-    await expect(page.locator('#source-nzqa')).toBeAttached();
+    await expect(page.locator('#source-nzqa-secondary')).toBeAttached();
     await expect(page.locator('#source-timss')).toBeAttached();
     await expect(page.locator('#source-nmssa')).toBeAttached();
     await expect(page.locator('#source-curriculum-insights')).toBeAttached();
@@ -73,7 +73,7 @@ test.describe('Data Sources page', () => {
     // Fetch raw HTML — links are server-rendered so no need to execute JS
     const response = await request.get('/nzqa-maths', { timeout: 60000 });
     const html = await response.text();
-    expect(html).toContain('href="/data-sources#source-nzqa"');
+    expect(html).toContain('href="/data-sources#source-nzqa-secondary"');
   });
 
   test('"About this data" links on /primary-maths point to correct anchors', async ({ request }) => {

@@ -178,7 +178,7 @@ export default function NzqaScholarshipPage() {
           </p>
           <p className="text-xs text-slate-600 font-mono">
             Source: NZQA Secondary School Statistics 2015–2024.{' '}
-            <Link href="/data-sources#source-nzqa" className="text-blue-500/70 hover:text-blue-400 transition-colors">
+            <Link href="/data-sources#source-nzqa-secondary" className="text-blue-500/70 hover:text-blue-400 transition-colors">
               About this data ↗
             </Link>
           </p>
