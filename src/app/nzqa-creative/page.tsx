@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { BumpChart, SlopeChart, StreamGraph } from './NzqaCreativeClient';
+import { PageSourcesFooter } from '@/components/PageSourcesFooter';
 
 export const metadata: Metadata = {
   title: 'Creative Views — Mazmatics',
@@ -133,6 +134,8 @@ export default function NzqaCreativePage() {
         </section>
 
         <SectionDivider />
+
+        <PageSourcesFooter chartPageId="nzqa-creative" />
 
         {/* Data notes */}
         <footer className="space-y-2 pb-8">

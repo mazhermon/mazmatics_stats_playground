@@ -7,6 +7,7 @@ import {
   NMSSATrendChart,
   CurriculumInsightsPipeline,
 } from './PrimaryMathsClient';
+import { PageSourcesFooter } from '@/components/PageSourcesFooter';
 
 export const metadata: Metadata = {
   title: 'NZ Primary Maths Explorer — Mazmatics',
@@ -303,11 +304,7 @@ export default function PrimaryMathsPage() {
           <p className="text-xs text-slate-700 font-mono">
             Built with Next.js · D3.js · data from TIMSS 2023 · NMSSA 2013/2018/2022 · Curriculum Insights 2024
           </p>
-          <p className="text-xs text-slate-700 font-mono">
-            <Link href="/data-sources" className="text-slate-600 hover:text-slate-400 transition-colors">
-              Data sources &amp; methodology →
-            </Link>
-          </p>
+          <PageSourcesFooter chartPageId="primary-maths" />
         </footer>
 
       </main>

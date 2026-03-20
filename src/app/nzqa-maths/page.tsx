@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { strings } from '@/lib/nzqa-strings';
+import { PageSourcesFooter } from '@/components/PageSourcesFooter';
 import {
   TimelineExplorer,
   EquityGapVisualizer,
@@ -232,6 +233,8 @@ export default function NzqaMathsPage() {
         </section>
 
         <SectionDivider />
+
+        <PageSourcesFooter chartPageId="nzqa-maths" />
 
         {/* Data notes */}
         <footer className="space-y-2 pb-8">

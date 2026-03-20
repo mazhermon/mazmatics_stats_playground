@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { LiteracyNumeracyTrendChart, LiteracyNumeracyBreakdownChart } from './NzqaLiteracyNumeracyClient';
+import { PageSourcesFooter } from '@/components/PageSourcesFooter';
 
 export const metadata: Metadata = {
   title: 'NZ Literacy & Numeracy Co-requisite Explorer — Mazmatics',
@@ -186,6 +187,8 @@ export default function NzqaLiteracyNumeracyPage() {
         </section>
 
         <SectionDivider />
+
+        <PageSourcesFooter chartPageId="nzqa-literacy-numeracy" />
 
         {/* Data notes */}
         <footer className="space-y-2 pb-8">

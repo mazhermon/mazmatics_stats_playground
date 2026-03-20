@@ -257,6 +257,34 @@ Each NZQA CSV breakdown is single-dimensional. No row has two non-null dimension
 - Server-only package — must be in `serverExternalPackages` in `next.config.ts`
 - Database: `src/data/nzqa.db` (read-only in production, read-write only in seed script)
 
+## Data Sources System
+
+The `/data-sources` page is a filterable reference page linking every chart to its raw data origin.
+
+### Architecture
+- **`src/lib/data-sources.ts`** — Single source of truth: `DataSource[]` array, `SourceId` and `ChartPageId` types, `CHART_PAGE_SOURCES` mapping, `CHART_PAGE_META`, and `getChartsForSource()` helper.
+- **`src/components/ViewSourcesLink.tsx`** — Plain `<a>` to `/data-sources?chart={chartPageId}`. Works in both Server and Client components.
+- **`src/components/PageSourcesFooter.tsx`** — Rendered in each explorer page's footer section; shows source chips + prominent "View all data sources" link.
+- **`src/app/data-sources/DataSourcesClient.tsx`** — `'use client'` component handling filter state and URL sync via `useSearchParams()`.
+
+### URL params
+- `?chart=primary-maths` — Filter sources to those used by a specific explorer page
+- `?source=nzqa-secondary` — Highlight a specific source and show which explorer pages use it
+
+### Adding a new chart or data source
+**READ the `data-sources-maintenance` skill** before adding any new chart page or data source. The skill contains the full checklist.
+
+### Source IDs and mappings
+| SourceId | Used by |
+|---|---|
+| `nzqa-secondary` | nzqa-maths, nzqa-creative, nzqa-stories, nzqa-patterns |
+| `nzqa-scholarship` | nzqa-scholarship |
+| `nzqa-endorsement` | nzqa-endorsement |
+| `nzqa-literacy-numeracy` | nzqa-literacy-numeracy |
+| `timss` | primary-maths |
+| `nmssa` | primary-maths |
+| `curriculum-insights` | primary-maths |
+
 ## Skills Available
 This project includes Claude Code skills in `.claude/skills/`:
 - **ui-ux-pro-max** — Design intelligence (palettes, fonts, patterns)
@@ -270,3 +298,4 @@ This project includes Claude Code skills in `.claude/skills/`:
 - **nz-primary-school-research** — NZ primary/intermediate school data sources, research findings, schema ideas (READ BEFORE any primary school feature work; run /ralph-loop to populate)
 - **creative-dataviz** — Creative visualisation types beyond bar charts: beeswarm, ridgeline, waffle, bump, slope, horizon, stream, cartogram
 - **e2e-testing** — Playwright test architecture, timeout rules, maintenance guide, debugging failures (READ BEFORE writing/fixing e2e tests)
+- **data-sources-maintenance** — Checklist for adding new charts and data sources to the filterable references system (READ BEFORE adding any new explorer page or dataset)

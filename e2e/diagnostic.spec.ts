@@ -31,6 +31,7 @@ test.describe('Page diagnostics', () => {
 
     await page.goto('/');
     await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(3000); // allow D3 chart previews to render
     await page.screenshot({ path: path.join(SCREENSHOT_DIR, '01-home.png'), fullPage: true });
 
     if (errors.length > 0) {

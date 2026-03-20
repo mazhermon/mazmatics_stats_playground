@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { EndorsementTrendChart, EndorsementBreakdownChart } from './NzqaEndorsementClient';
+import { PageSourcesFooter } from '@/components/PageSourcesFooter';
 
 export const metadata: Metadata = {
   title: 'NZ Qualification Endorsement Explorer — Mazmatics',
@@ -162,6 +163,8 @@ export default function NzqaEndorsementPage() {
         </section>
 
         <SectionDivider />
+
+        <PageSourcesFooter chartPageId="nzqa-endorsement" />
 
         {/* Data notes */}
         <footer className="space-y-2 pb-8">

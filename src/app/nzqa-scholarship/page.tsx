@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ScholarshipTrendChart, ScholarshipBreakdownChart } from './NzqaScholarshipClient';
+import { PageSourcesFooter } from '@/components/PageSourcesFooter';
 
 export const metadata: Metadata = {
   title: 'NZ Scholarship Maths Explorer — Mazmatics',
@@ -163,6 +164,8 @@ export default function NzqaScholarshipPage() {
         </section>
 
         <SectionDivider />
+
+        <PageSourcesFooter chartPageId="nzqa-scholarship" />
 
         {/* Data notes */}
         <footer className="space-y-2 pb-8">

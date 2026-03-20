@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { WaffleGrid, BeeswarmChart, SmallMultiplesChart } from './NzqaStoriesClient';
+import { PageSourcesFooter } from '@/components/PageSourcesFooter';
 
 export const metadata: Metadata = {
   title: 'Data Stories — Mazmatics',
@@ -136,6 +137,8 @@ export default function NzqaStoriesPage() {
         </section>
 
         <SectionDivider />
+
+        <PageSourcesFooter chartPageId="nzqa-stories" />
 
         <footer className="space-y-2 pb-8">
           <p className="text-xs text-slate-600 font-mono">Source: NZQA Secondary School Statistics 2015–2024. Suppressed cells excluded.</p>

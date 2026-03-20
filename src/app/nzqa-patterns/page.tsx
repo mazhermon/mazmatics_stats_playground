@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { RidgelinePlot, HorizonChart, BubbleComparison } from './NzqaPatternsClient';
+import { PageSourcesFooter } from '@/components/PageSourcesFooter';
 
 export const metadata: Metadata = {
   title: 'Patterns & Trends — Mazmatics',
@@ -133,6 +134,8 @@ export default function NzqaPatternsPage() {
         </section>
 
         <SectionDivider />
+
+        <PageSourcesFooter chartPageId="nzqa-patterns" />
 
         <footer className="space-y-2 pb-8">
           <p className="text-xs text-slate-600 font-mono">Source: NZQA Secondary School Statistics 2015–2024. Suppressed cells excluded.</p>
