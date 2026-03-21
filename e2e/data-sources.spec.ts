@@ -64,7 +64,8 @@ test.describe('Data Sources page', () => {
   test('nav link to /data-sources exists on home page', async ({ page }) => {
     await page.goto('/');
     await page.waitForSelector('h1', { timeout: 10000 });
-    const dataSourcesLink = page.locator('a[href="/data-sources"]');
+    // .first() because SiteNav also adds a /data-sources link on every page
+    const dataSourcesLink = page.locator('a[href="/data-sources"]').first();
     await expect(dataSourcesLink).toBeAttached();
   });
 

@@ -398,13 +398,13 @@ test.describe('CurriculumInsightsPipeline', () => {
 test.describe('Home page — /primary-maths nav card', () => {
   test('nav card link to /primary-maths is present on home page', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('a[href="/primary-maths"]')).toBeVisible();
+    await expect(page.locator('a[href="/primary-maths"]').first()).toBeVisible();
   });
 
   test('nav card navigates to /primary-maths', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto('/');
-    await page.click('a[href="/primary-maths"]');
+    await page.locator('a[href="/primary-maths"]').last().click();
     await expect(page).toHaveURL('/primary-maths');
     await expect(page.locator('h1').first()).toContainText('primary school');
   });

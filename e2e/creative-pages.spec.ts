@@ -5,29 +5,31 @@ import { test, expect } from '@playwright/test';
 test.describe('Home page nav cards', () => {
   test('all 4 nav cards are present and link correctly', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('a[href="/nzqa-maths"]')).toBeVisible();
-    await expect(page.locator('a[href="/nzqa-creative"]')).toBeVisible();
-    await expect(page.locator('a[href="/nzqa-stories"]')).toBeVisible();
-    await expect(page.locator('a[href="/nzqa-patterns"]')).toBeVisible();
+    // .first() because SiteNav also adds these links on every page
+    await expect(page.locator('a[href="/nzqa-maths"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/nzqa-creative"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/nzqa-stories"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/nzqa-patterns"]').first()).toBeVisible();
   });
 
   test('nav card navigates to /nzqa-creative', async ({ page }) => {
     await page.goto('/');
-    await page.click('a[href="/nzqa-creative"]');
+    // .last() because SiteNav link is first and outside viewport when drawer is closed
+    await page.locator('a[href="/nzqa-creative"]').last().click();
     await expect(page).toHaveURL('/nzqa-creative');
     await expect(page.locator('h1')).toContainText('Creative Views');
   });
 
   test('nav card navigates to /nzqa-stories', async ({ page }) => {
     await page.goto('/');
-    await page.click('a[href="/nzqa-stories"]');
+    await page.locator('a[href="/nzqa-stories"]').last().click();
     await expect(page).toHaveURL('/nzqa-stories');
     await expect(page.locator('h1')).toContainText('Data Stories');
   });
 
   test('nav card navigates to /nzqa-patterns', async ({ page }) => {
     await page.goto('/');
-    await page.click('a[href="/nzqa-patterns"]');
+    await page.locator('a[href="/nzqa-patterns"]').last().click();
     await expect(page).toHaveURL('/nzqa-patterns');
     await expect(page.locator('h1')).toContainText('Patterns & Trends');
   });
@@ -52,7 +54,8 @@ test.describe('/nzqa-creative page', () => {
   });
 
   test('back link navigates to home', async ({ page }) => {
-    await page.click('a[href="/"]');
+    // .last() excludes the SiteNav wordmark/Home links (which appear first in DOM)
+    await page.locator('a[href="/"]').last().click();
     await expect(page).toHaveURL('/');
   });
 

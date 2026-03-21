@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { BetaBanner } from "@/components/layout/BetaBanner";
 import { BetaBadge } from "@/components/layout/BetaBadge";
+import { SiteNav } from "@/components/layout/SiteNav";
 
 const geist = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,7 @@ export default function RootLayout({
       <body className="antialiased bg-black text-white">
         <BetaBanner />
         <BetaBadge />
+        <SiteNav />
         {children}
       </body>
     </html>

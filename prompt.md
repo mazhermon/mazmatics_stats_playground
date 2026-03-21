@@ -1,137 +1,90 @@
-# Fix Deployment + Verify Tests — Mazmatics Stats
+# Fix E2E Tests — Nav Drawer Caused Duplicate Link Failures
 
-## Context
+## What Was Built (Already Done)
 
-Phase 20 (Data Sources Filtering System) just shipped. A background e2e test run completed with **119 passed, exit code 0** — all tests are currently passing.
+- `src/components/layout/SiteNav.tsx` — global side-nav drawer, wired into `src/app/layout.tsx`
+- `e2e/site-nav.spec.ts` — 10 tests for the nav drawer (all passing when run in isolation)
+- Visual snapshots updated for all 5 visual tests (8s settle timeout for D3 force sims)
 
-The only confirmed broken thing is the **Vercel deployment** (build fails due to `remotion/remotion.config.ts` being compiled by Next.js TypeScript). This has been partially addressed in `tsconfig.json` but needs verification via a full build.
+## The Remaining Problem
 
----
+The SiteNav adds duplicate `a[href="..."]` links to every page (all nav links appear
+in the hidden drawer on every page). This caused Playwright strict-mode violations in
+existing tests that used unscoped `a[href="..."]` selectors.
 
-## Skills to Read First
+## What's Already Fixed in Test Files
 
-- `e2e-testing` — before running or fixing any e2e tests
-- `data-sources-maintenance` — context on Phase 20 changes
+`.first()` / `.last()` added to resolve strict-mode violations:
+- `e2e/landing.spec.ts` — `.first()` on card presence, `.last().click()` on nav clicks
+- `e2e/data-sources.spec.ts` — `.first()` on `/data-sources` link check
+- `e2e/about.spec.ts` — `.first()` on `/about` link check
+- `e2e/creative-pages.spec.ts` — `.first()` on presence checks, `.last()` on all clicks
+- `e2e/primary-maths.spec.ts` — `.first()` on presence, `.last().click()` on nav
 
----
+## Outstanding Issue: Cold Dev Server Race Condition
 
-## What Changed in Phase 20
+After `rm -rf .next`, the dev server races when 3 parallel test workers all hit different
+pages simultaneously. Some pages only get the manifest written (not page.js) and 500.
+Affected when cold: `/nzqa-maths`, `/nzqa-patterns`, `/nzqa-endorsement`.
 
-New files created:
-- `src/lib/data-sources.ts` — 7 sources, 8 chart pages, `SourceId`/`ChartPageId` types, mappings
-- `src/components/ViewSourcesLink.tsx` — `<a href="/data-sources?chart=...">`
-- `src/components/PageSourcesFooter.tsx` — source chips + view link (server-safe)
-- `src/app/data-sources/DataSourcesClient.tsx` — `'use client'` interactive filter page
-- `src/app/data-sources/page.tsx` — thin server wrapper using `searchParams`
+## Step 1 — Ensure Dev Server is Warm
 
-All 8 explorer pages got `PageSourcesFooter` added to their footers.
-
-The `/data-sources` page is now fully dynamic (not static). Section anchor IDs changed:
-- Old: `#source-nzqa` → New: `#source-nzqa-secondary`
-- `#source-timss`, `#source-nmssa`, `#source-curriculum-insights` — unchanged
-
----
-
-## Step 1 — Verify Deployment Fix
-
-`tsconfig.json` has `"remotion"` added to the `exclude` array (already done). Verify with:
-
+Check all pages return 200:
 ```bash
-npx tsc --noEmit
+for page in / /primary-maths /nzqa-maths /nzqa-literacy-numeracy /nzqa-creative /nzqa-stories /nzqa-patterns /nzqa-scholarship /nzqa-endorsement /data-sources /about; do
+  curl -s -o /dev/null -w "$page: %{http_code}\n" "http://localhost:3000$page"
+done
 ```
-Should be clean. Then run a full production build:
 
+If any return 500 — restart and warm sequentially:
 ```bash
-npm run build
+kill $(lsof -ti:3000) 2>/dev/null && rm -rf .next && sleep 2
+npm run dev > /tmp/dev-server.log 2>&1 &
+sleep 10
+for page in / /primary-maths /nzqa-maths /nzqa-literacy-numeracy /nzqa-creative /nzqa-stories /nzqa-patterns /nzqa-scholarship /nzqa-endorsement /data-sources /about; do
+  curl -s -o /dev/null -w "$page: %{http_code}\n" "http://localhost:3000$page"; sleep 3
+done
 ```
 
-The deployment error was:
-```
-./remotion/remotion.config.ts:1:24
-Type error: Cannot find module '@remotion/cli/config' or its corresponding type declarations.
-```
-The `tsconfig.json` fix (excluding `remotion/` from compilation) should resolve this. If `npm run build` passes clean, the deployment is fixed.
-
----
-
-## Step 2 — Run All E2E Tests
+## Step 2 — Run Full E2E Suite
 
 ```bash
 npm run test:e2e
 ```
 
-A background run completed with 119 passed / exit code 0. Confirm this is still the case. Note the **2 known pre-existing failures** that are acceptable:
+Expected: 222 passed. Known pre-existing failures (acceptable):
 - `/nzqa-patterns` networkidle timeout in `e2e/creative-pages.spec.ts`
 - Diagnostic timeline API 500 in `e2e/diagnostic.spec.ts`
 
-If data-sources tests are failing (they test old anchor IDs), fix them:
+If timeout failures on nzqa-maths etc → server not warm, re-warm.
+If strict-mode violations → find the selector and add `.first()`.
 
-**File: `e2e/data-sources.spec.ts`**
+## Step 3 — Visual Snapshots
 
-Known staleness to check:
-- `#source-nzqa` selector → should be `#source-nzqa-secondary` (new section ID)
-- h2 heading "NZQA Secondary School Statistics" → now "NZQA Subject Attainment Statistics" (source name changed in `data-sources.ts`)
-- Test checking `href="/data-sources#source-nzqa"` in nzqa-maths HTML → link still exists in page.tsx footer but points to old anchor
-
-Also check these page files still reference correct anchors:
-- `src/app/nzqa-maths/page.tsx` has `href="/data-sources#source-nzqa"` — anchor is now `#source-nzqa-secondary`
-- `src/app/nzqa-scholarship/page.tsx` — same issue
-- `src/app/primary-maths/page.tsx` — `#source-timss`, `#source-nmssa`, `#source-curriculum-insights` — these are unchanged and fine
-
-If these are actual failures, fix `data-sources.spec.ts` (update assertions) AND the broken anchor links in the page files.
-
----
-
-## Step 3 — Update Visual Snapshots
-
-The creative pages (`/nzqa-creative`, `/nzqa-stories`, `/nzqa-patterns`) now have a `PageSourcesFooter` in their footers. The existing visual snapshots were taken without this footer and are now stale.
-
-Regenerate:
-```bash
-npx playwright test --config=playwright.visual.config.ts --update-snapshots
-```
-
-Then verify the new snapshots look correct:
 ```bash
 npm run test:visual
 ```
 
-All 5 visual snapshot tests (landing + 4 creative) should pass.
+5/5 should pass (already updated).
 
----
-
-## Step 4 — Run Unit Tests
+## Step 4 — Unit Tests + Build
 
 ```bash
-npm test
+npm test && npm run build
 ```
-These are unlikely affected by Phase 20 changes. Should all pass.
-
----
-
-## Step 5 — Final Build Confirmation
-
-After all test fixes:
-```bash
-npm run build
-```
-Must pass clean. This is what Vercel runs.
-
----
 
 ## Acceptance Criteria
 
-- [ ] `npx tsc --noEmit` passes clean
-- [ ] `npm run build` passes clean (deployment fix confirmed)
-- [ ] `npm run test:e2e` — all tests pass except the 2 known pre-existing failures
-- [ ] `e2e/data-sources.spec.ts` — all 9 tests pass with correct anchor IDs
-- [ ] `npm run test:visual` — all 5 visual snapshot tests pass
-- [ ] `npm test` — all unit tests pass
+- [ ] All 11 pages return HTTP 200
+- [ ] `npm run test:e2e` — 222 pass (only 2 known pre-existing failures)
+- [ ] `npm run test:visual` — 5/5 pass
+- [ ] `npm test` — 175/175 pass
+- [ ] `npm run build` — clean
 
 ## Completion Promise
 
-Output `<promise>TESTS_AND_DEPLOYMENT_CLEAN</promise>` when all acceptance criteria are met.
+Output `<promise>TESTS_FULLY_GREEN</promise>` when all acceptance criteria are met.
 
 ## Completion Promise section (for ralph-loop stop hook detection)
 
-TESTS_AND_DEPLOYMENT_CLEAN
+TESTS_FULLY_GREEN

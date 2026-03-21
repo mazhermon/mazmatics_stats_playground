@@ -78,7 +78,8 @@ test.describe('About page', () => {
   test('/data-sources link present and navigates correctly', async ({ page }) => {
     await page.goto('/about');
     await page.waitForSelector('h1', { timeout: 10000 });
-    const dsLink = page.locator('a[href="/data-sources"]').first();
+    // Use text filter to target the in-page link, not the hidden SiteNav drawer link
+    const dsLink = page.locator('a[href="/data-sources"]').filter({ hasText: 'methodology' });
     await expect(dsLink).toBeAttached();
     await dsLink.click();
     await page.waitForSelector('h1', { timeout: 10000 });
@@ -95,14 +96,15 @@ test.describe('About page', () => {
   test('home page has "About" card linking to /about', async ({ page }) => {
     await page.goto('/');
     await page.waitForSelector('h1', { timeout: 10000 });
-    const aboutLink = page.locator('a[href="/about"]');
+    const aboutLink = page.locator('a[href="/about"]').first();
     await expect(aboutLink).toBeAttached();
   });
 
   test('/about nav back-link navigates to home', async ({ page }) => {
     await page.goto('/about');
     await page.waitForSelector('h1', { timeout: 10000 });
-    const backLink = page.locator('a[href="/"]').first();
+    // Use text filter to target the in-page back-link, not the hidden SiteNav drawer link
+    const backLink = page.locator('a[href="/"]').filter({ hasText: 'All explorers' });
     await expect(backLink).toBeAttached();
     await backLink.click();
     await page.waitForSelector('h1', { timeout: 10000 });

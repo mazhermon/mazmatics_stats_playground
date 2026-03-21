@@ -25,18 +25,20 @@ test.describe('Home page structure', () => {
   });
 
   test('all 4 featured category cards are present', async ({ page }) => {
-    await expect(page.locator('a[href="/primary-maths"]')).toBeVisible();
-    await expect(page.locator('a[href="/nzqa-maths"]')).toBeVisible();
-    await expect(page.locator('a[href="/nzqa-literacy-numeracy"]')).toBeVisible();
-    await expect(page.locator('a[href="/nzqa-creative"]')).toBeVisible();
+    // .first() because SiteNav also contains these links — we just verify a link exists
+    await expect(page.locator('a[href="/primary-maths"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/nzqa-maths"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/nzqa-literacy-numeracy"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/nzqa-creative"]').first()).toBeVisible();
   });
 
   test('all 5 more nav cards are present', async ({ page }) => {
-    await expect(page.locator('a[href="/nzqa-scholarship"]')).toBeVisible();
-    await expect(page.locator('a[href="/nzqa-endorsement"]')).toBeVisible();
-    await expect(page.locator('a[href="/nzqa-stories"]')).toBeVisible();
-    await expect(page.locator('a[href="/nzqa-patterns"]')).toBeVisible();
-    await expect(page.locator('a[href="/about"]')).toBeVisible();
+    // .first() because SiteNav also contains these links — we just verify a link exists
+    await expect(page.locator('a[href="/nzqa-scholarship"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/nzqa-endorsement"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/nzqa-stories"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/nzqa-patterns"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/about"]').first()).toBeVisible();
   });
 
   test('preview charts render at least 4 SVGs after data loads', async ({ page }) => {
@@ -46,7 +48,8 @@ test.describe('Home page structure', () => {
   });
 
   test('featured card navigates to /primary-maths', async ({ page }) => {
-    await page.click('a[href="/primary-maths"]');
+    // .last() because SiteNav link is first and is outside viewport when drawer is closed
+    await page.locator('a[href="/primary-maths"]').last().click();
     await expect(page).toHaveURL('/primary-maths');
     await expect(page.locator('h1')).toBeVisible();
   });
